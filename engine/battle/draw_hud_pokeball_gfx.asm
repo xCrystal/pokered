@@ -17,7 +17,11 @@ LoadPartyPokeballGfx: ; 3a85d (e:685d)
 	jp CopyVideoData
 
 SetupOwnPartyPokeballs: ; 3a869 (e:6869)
+IF GEN_2_GRAPHICS
+	call PlayerHUDHAX
+ELSE
 	call PlacePlayerHUDTiles
+ENDC	
 	ld hl, wPartyMon1
 	ld de, wPartyCount ; wPartyCount
 	call SetupPokeballs
@@ -137,7 +141,11 @@ PlaceEnemyHUDTiles: ; 3a919 (e:6919)
 	ld bc, $3
 	call CopyData
 	hlCoord 1, 2
+IF GEN_2_GRAPHICS
+	jp EnemyHUDHax
+ELSE	
 	ld de, $1
+ENDC	
 	jr PlaceHUDTiles
 
 EnemyBattleHUDGraphicsTiles: ; 3a92d (e:692d)
@@ -189,3 +197,39 @@ SetupPlayerAndEnemyPokeballs: ; 3a948 (e:6948)
 ; four tiles: pokeball, black pokeball (status ailment), crossed out pokeball (faited) and pokeball slot (no mon)
 PokeballTileGraphics:: ; 3a97e (e:697e)
 	INCBIN "gfx/pokeball.2bpp"
+
+; HAX	
+IF GEN_2_GRAPHICS
+PlayerHUDHAX:
+	ld hl, PlayerHUDTileMap
+	jp PlayerHUDUpdateDone
+	
+PlayerHUDTileMap:
+	db $73, $75, $6F
+
+EnemyHUDHAX:
+	ld [hl], $72
+	ld a, [W_ISINBATTLE]
+	dec a
+	jr  nz, .notWildBattle
+	push hl
+	ld a, [wEnemyMon]
+	ld [wd11e], a
+	callab IndexToPokedex
+	ld a, [wd11e]
+	dec a
+	ld c, a
+	ld b, $2
+	ld hl, wPokedexOwned
+	predef FlagActionPredef
+	ld a, c
+	and a
+	jr z, .notOwned
+	hlCoord 1, 1
+	ld [hl], $E9
+.notOwned
+	pop hl
+.notWildBattle
+	ld de, $0001
+	jp EnemyHUDUpdateDone
+ENDC	

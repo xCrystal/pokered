@@ -13,7 +13,7 @@ versions := red blue yellow
 
 
 # Header options for rgbfix.
-dmg_opt =  -jsv -k 01 -l 0x33 -m 0x13 -p 0 -r 03
+dmg_opt =  -Csv -k 01 -l 0x33 -m 0x13 -p 0 -r 03
 cgb_opt = -cjsv -k 01 -l 0x33 -m 0x1b -p 0 -r 03
 
 red_opt    = $(dmg_opt) -t "POKEMON RED"

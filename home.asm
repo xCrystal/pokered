@@ -14,7 +14,7 @@ _RefreshMapColors:
 	
 ; Vblank hook
 SECTION "rst 10", ROM0 [$10]
-        ld b, BANK(GbcVBlankHook)
+	ld b, BANK(GbcVBlankHook)
 	ld hl, GbcVBlankHook
 	jp Bankswitch
 

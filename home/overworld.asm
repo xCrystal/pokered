@@ -683,7 +683,7 @@ PlayMapChangeSound:: ; 08c9 (0:08c9)
 	ld a,[wMapPalOffset]
 	and a
 	ret nz
-	jp GBFadeOutToBlack
+	jp GBFadeOut_Custom ; HAX: Fade to white instead of black. Looks nicer IMO.
 
 CheckIfInOutsideMap:: ; 08e1 (0:08e1)
 ; If the player is in an outside map (a town or route), set the z flag
@@ -2320,7 +2320,7 @@ LoadMapData:: ; 1241 (0:1241)
 	call LoadMapHeader
 	callba InitMapSprites ; load tile pattern data for sprites
 	call LoadTileBlockMap
-	call LoadTilesetTilePatternData
+	call _LoadTilesetPatternsAndPalettes ; HAX
 	call LoadCurrentMapView
 ; copy current map view to VRAM
 	ld hl,wTileMap
@@ -2329,9 +2329,7 @@ LoadMapData:: ; 1241 (0:1241)
 .vramCopyLoop
 	ld c,20
 .vramCopyInnerLoop
-	ld a,[hli]
-	ld [de],a
-	inc e
+	rst $08 ; call _RefreshMapColors ; HAX @@@
 	dec c
 	jr nz,.vramCopyInnerLoop
 	ld a,32 - 20

@@ -310,7 +310,7 @@ UpdateMovingBgTiles::
 
 	and 4
 	; HAX
-	jp nz,label_2c_l001 ; this was $7000 @@@
+	jp nz,label_2c_l000 ; this was $7000 @@@
 	jp label_2c_l002 ; this was $7080 @@@
 	
 BackToUpdateMovingBgTiles:: ; referenced in refreshmaps.asm	

@@ -3188,7 +3188,7 @@ LoadHpBarAndStatusTilePatterns:: ; 36c0 (0:36c0)
 IF GEN_2_GRAPHICS
 	callba LoadHPBarAndEXPBar ; @@@ this function is defined in main.asm
 	ret
-	ds $17 ; @@@ this shouldn't be necessary if all fixed addresses are removed from now on
+;	ds $17 ; @@@ this shouldn't be necessary if all fixed addresses are removed till the end of the bank
 ELSE
 	ld a, [rLCDC]
 	bit 7, a ; is the LCD enabled?

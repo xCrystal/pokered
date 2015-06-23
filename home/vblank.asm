@@ -25,12 +25,13 @@ VBlank::
 	call RedrawExposedScreenEdge
 	call VBlankCopy
 	call VBlankCopyDouble
-	call UpdateMovingBgTiles
+	; call UpdateMovingBgTiles
 	call $ff80 ; hOAMDMA
-	ld a, Bank(PrepareOAMData)
-	ld [H_LOADEDROMBANK], a
-	ld [MBC1RomBank], a
-	call PrepareOAMData
+; HAX: don't update sprites here. They're updated elsewhere to prevent wobbliness.	
+	; ld a, Bank(PrepareOAMData)
+	; ld [H_LOADEDROMBANK], a
+	; ld [MBC1RomBank], a
+	; call PrepareOAMData
 
 	; VBlank-sensitive operations end.
 
@@ -95,8 +96,7 @@ DelayFrame::
 
 NOT_VBLANKED EQU 1
 
-	ld a, NOT_VBLANKED
-	ld [H_VBLANKOCCURRED], a
+	call DelayFrameHook ; @@@ at home.asm
 .halt
 	halt
 	ld a, [H_VBLANKOCCURRED]

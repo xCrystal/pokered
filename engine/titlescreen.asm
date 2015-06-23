@@ -272,7 +272,7 @@ Func_4496: ; 4496 (1:4496)
 	ld a, $90
 	ld [hWY], a
 	ld d, 1 ; scroll out
-	callba TitleScroll
+	callba LoadTitleMonTilesAndPalettes ; HAX palette must be refreshed
 	ret
 
 Func_44c1: ; 44c1 (1:44c1)

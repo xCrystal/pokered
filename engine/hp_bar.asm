@@ -163,12 +163,8 @@ UpdateHPBar_AnimateHPBar: ; fab1 (3:7ab1)
 
 ; compares old HP and new HP and sets c and z flags accordingly
 UpdateHPBar_CompareNewHPToOldHP: ; fad1 (3:7ad1)
-	ld a, d
-	sub b
-	ret nz
-	ld a, e
-	sub c
-	ret
+
+; Removed UpdateHPBar_CompareNewHPToOldHP from here
 
 ; calcs HP difference between bc and de (into de)
 UpdateHPBar_CalcHPDifference: ; fad7 (3:7ad7)

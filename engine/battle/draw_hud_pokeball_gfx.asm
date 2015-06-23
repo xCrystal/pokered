@@ -122,6 +122,7 @@ WritePokeballOAMData: ; 3a8e1 (e:68e1)
 
 PlacePlayerHUDTiles: ; 3a902 (e:6902)
 	ld hl, PlayerBattleHUDGraphicsTiles ; $6916
+PlayerHUDUpdateDone:	
 	ld de, wTrainerFacingDirection
 	ld bc, $3
 	call CopyData
@@ -130,7 +131,6 @@ PlacePlayerHUDTiles: ; 3a902 (e:6902)
 	jr PlaceHUDTiles
 
 PlayerBattleHUDGraphicsTiles: ; 3a916 (e:6916)
-PlayerHUDUpdateDone:
 ; The tile numbers for specific parts of the battle display for the player's pokemon
 	db $73 ; unused ($73 is hardcoded into the routine that uses these bytes)
 	db $77 ; lower-right corner tile of the HUD

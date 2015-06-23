@@ -26,6 +26,7 @@ VBlank::
 	call VBlankCopy
 	call VBlankCopyDouble
 	; call UpdateMovingBgTiles
+	rst $10
 	call $ff80 ; hOAMDMA
 ; HAX: don't update sprites here. They're updated elsewhere to prevent wobbliness.	
 	; ld a, Bank(PrepareOAMData)

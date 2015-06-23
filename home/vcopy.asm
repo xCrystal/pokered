@@ -294,7 +294,7 @@ UpdateMovingBgTiles::
 	cp $14
 	ret c
 	cp $15
-	jr z, .flower
+	jr z, flower
 
 	ld hl, vTileset + $14 * $10
 	ld c, $10
@@ -326,7 +326,7 @@ BackToUpdateMovingBgTiles:: ; referenced in refreshmaps.asm
 	ld [$ffd8], a
 	ret
 
-.flower
+flower
 	xor a
 	ld [$ffd8], a
 

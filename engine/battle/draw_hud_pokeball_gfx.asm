@@ -130,6 +130,7 @@ PlacePlayerHUDTiles: ; 3a902 (e:6902)
 	jr PlaceHUDTiles
 
 PlayerBattleHUDGraphicsTiles: ; 3a916 (e:6916)
+PlayerHUDUpdateDone:
 ; The tile numbers for specific parts of the battle display for the player's pokemon
 	db $73 ; unused ($73 is hardcoded into the routine that uses these bytes)
 	db $77 ; lower-right corner tile of the HUD
@@ -156,6 +157,7 @@ EnemyBattleHUDGraphicsTiles: ; 3a92d (e:692d)
 
 PlaceHUDTiles: ; 3a930 (e:6930)
 	ld [hl], $73
+EnemyHUDUpdateDone:	
 	ld bc, $14
 	add hl, bc
 	ld a, [wTrainerScreenY]
@@ -207,7 +209,7 @@ PlayerHUDHAX:
 PlayerHUDTileMap:
 	db $73, $75, $6F
 
-EnemyHUDHAX:
+EnemyHUDHax:
 	ld [hl], $72
 	ld a, [W_ISINBATTLE]
 	dec a

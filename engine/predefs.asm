@@ -124,7 +124,7 @@ PredefPointers:: ; 4fe79 (13:7e79)
 	add_predef Func_71ddf
 	add_predef StarterDex ; 46
 	add_predef _AddPartyMon
-	add_predef UpdateHPBar2_Hook
+	add_predef UpdateHPBar_Hook
 	add_predef DrawEnemyHUDAndHPBar
 	add_predef LoadTownMap_Nest
 	add_predef PrintMonType

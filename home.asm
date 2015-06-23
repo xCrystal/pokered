@@ -127,10 +127,10 @@ LoadBank1:
 Initialize:
 	cp $11
 	jr z,IsGBC
-	.IsNotGBC
+.IsNotGBC
 	ld a,$30
 	ld [$2000],a
-	jr .loop3
+	jr loop3
 	
 _ColorOverworldSprites: ; $00dc
 	push af
@@ -140,7 +140,7 @@ _ColorOverworldSprites: ; $00dc
 _LoadTilesetPatternsAndPalettes: ; $00e1
 	push af
 	ld a, BANK(LoadTilesetPalette)
-.loop3
+loop3
 	ld [$2000],a
 	call CallToBank2 ; @@@ call $00f5, now $00f3 after removing the nops. Is $00f5 referenced anywhere else?
 	pop af

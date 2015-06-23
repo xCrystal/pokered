@@ -4795,9 +4795,9 @@ UpdateHPBar_CompareNewHPToOldHP: ; fad1 (3:7ad1)
 UpdateHPBar_Palettes:
 	; Store variables to be retrieved after the Bankswitch function.
 	; Using Predef causes glitches, because this is called FROM a predef.
-	ld a, [wcfba]
+	ld a, [wLoadedMonMaxHP]
 	ld d, a
-	ld a, [wcfbb]
+	ld a, [wLoadedMonMaxHP + 1]
 	ld e, a
 
 	ld hl,wPredefRegisters + 2
@@ -4894,7 +4894,7 @@ UpdateHPBar_Hook:
 
 	; Load pokemon data
 .gotPokemon
-	ld de, wcfb9
+	ld de, wLoadedMonLevel
 	ld bc, $b
 	call CopyData
 

@@ -1,13 +1,28 @@
 
 ; The rst vectors are unused.
 SECTION "rst 00", ROM0 [$00]
-	rst $38
+RefreshMapColorsScrolling: ; @@@ is this referenced?
+	push af
+	ld a,$2f
+	jp CallToBank ; @@@ this calls 2f:6000
+	
 SECTION "rst 08", ROM0 [$08]
-	rst $38
+_RefreshMapColors:
+	push af
+	ld a,BANK(RefreshMapColors)
+	jp CallToBank ; @@@ this calls 2c:6000
+	
+; Vblank hook
 SECTION "rst 10", ROM0 [$10]
-	rst $38
+        ld b, BANK(GbcVBlankHook)
+	ld hl, GbcVBlankHook
+	jp Bankswitch
+
+; Bankswitch
 SECTION "rst 18", ROM0 [$18]
-	rst $38
+	jp Bankswitch
+	
+; Unused	
 SECTION "rst 20", ROM0 [$20]
 	rst $38
 SECTION "rst 28", ROM0 [$28]
@@ -15,17 +30,29 @@ SECTION "rst 28", ROM0 [$28]
 SECTION "rst 30", ROM0 [$30]
 	rst $38
 SECTION "rst 38", ROM0 [$38]
-	rst $38
+	stop
 
-; Hardware interrupts
+; Hardware Interrupts
 SECTION "vblank", ROM0 [$40]
-	jp VBlank
-SECTION "hblank", ROM0 [$48]
-	rst $38
-SECTION "timer",  ROM0 [$50]
-	jp Timer
+	push hl
+	ld hl, VBlank
+	jp InterruptWrapper
+
+SECTION "lcdc", ROM0 [$48]
+	push hl
+	ld hl, _GbcPrepareVBlank
+	jp InterruptWrapper
+
+SECTION "timer", ROM0 [$50]
+	push hl
+	ld hl, Timer
+	jp InterruptWrapper
+
 SECTION "serial", ROM0 [$58]
-	jp Serial
+	push hl
+	ld hl, Serial
+	jp InterruptWrapper
+
 SECTION "joypad", ROM0 [$60]
 	reti
 
@@ -83,11 +110,57 @@ HideSprites::
 INCLUDE "home/copy.asm"
 
 
+SECTION "Initialization", HOME [$c0]
+
+IsGBC:
+	ld hl,Start
+	push hl ; hijack ret
+	ld a,BANK(InitGbcMode)
+	ld [$2000],a
+	jp InitGbcMode
+	
+LoadBank1:
+	xor a
+	ld [$2000],a
+	ret
+	
+Initialize:
+	cp $11
+	jr z,IsGBC
+	.IsNotGBC
+	ld a,$30
+	ld [$2000],a
+	jr .loop3
+	
+_ColorOverworldSprites: ; $00dc
+	push af
+	ld a,BANK(ColorOverworldSprites)
+	jr CallToBank ; @@@ this calls 2e:6000
+	
+_LoadTilesetPatternsAndPalettes: ; $00e1
+	push af
+	ld a, BANK(LoadTilesetPalette)
+.loop3
+	ld [$2000],a
+	call CallToBank2 ; @@@ call $00f5, now $00f3 after removing the nops. Is $00f5 referenced anywhere else?
+	pop af
+	call LoadTilesetTilePatternData
+	ret
+
+CallToBank: ; $00ef
+	ld [$2000],a
+	pop af
+CallToBank2: ; $00f3	
+	push af
+	call $6000 ; @@@ this calls $6000 for banks 2c-2f?
+	ld a,[$ff00+$b8]
+	ld [$2000],a
+	pop af
+	ret
+
 
 SECTION "Entry", ROM0 [$100]
-
-	nop
-	jp Start
+	jp Initialize
 
 
 SECTION "Header", ROM0 [$104]
@@ -103,6 +176,7 @@ SECTION "Main", ROM0
 
 Start::
 	cp GBC
+Start_2: ; @@@ is this ever referenced?	
 	jr z, .gbc
 	xor a
 	jr .ok
@@ -726,40 +800,22 @@ UncompressMonSprite:: ; 1627 (0:1627)
 	ld [W_SPRITEINPUTPTR],a    ; fetch sprite input pointer
 	ld a,[hl]
 	ld [W_SPRITEINPUTPTR+1],a
-; define (by index number) the bank that a pokemon's image is in
-; index = Mew, bank 1
-; index = Kabutops fossil, bank $B
-;	index < $1F, bank 9
-; $1F ≤ index < $4A, bank $A
-; $4A ≤ index < $74, bank $B
-; $74 ≤ index < $99, bank $C
-; $99 ≤ index,       bank $D
-	ld a,[wcf91] ; XXX name for this ram location
-	ld b,a
-	cp MEW
-	ld a,BANK(MewPicFront)
-	jr z,.GotBank
-	ld a,b
+
+; Instead of hardcoding the bank number of each mon based on its index number,
+; each pokemon's picture bank is defined with an unused byte in its stats.
+	ld a, [wcf91] ; get Pokémon ID
+	ld b, BANK(FossilKabutopsPic)
 	cp FOSSIL_KABUTOPS
-	ld a,BANK(FossilKabutopsPic)
-	jr z,.GotBank
+	jr z,.RecallBank
+	cp FOSSIL_AERODACTYL
+	jr z,.RecallBank
+	cp MON_GHOST
+	jr z,.RecallBank
+	ld a, [W_MONHPICBANK] ; Get bank from base stats @@@ this needs to be defined in wram.asm at d0d3
+	jr .GotBank
+.RecallBank
 	ld a,b
-	cp TANGELA + 1
-	ld a,BANK(TangelaPicFront)
-	jr c,.GotBank
-	ld a,b
-	cp MOLTRES + 1
-	ld a,BANK(MoltresPicFront)
-	jr c,.GotBank
-	ld a,b
-	cp BEEDRILL + 2
-	ld a,BANK(BeedrillPicFront)
-	jr c,.GotBank
-	ld a,b
-	cp STARMIE + 1
-	ld a,BANK(StarmiePicFront)
-	jr c,.GotBank
-	ld a,BANK(VictreebelPicFront)
+
 .GotBank
 	jp UncompressSpriteData
 
@@ -3127,7 +3183,13 @@ LoadTextBoxTilePatterns::
 	ld bc, BANK(TextBoxGraphics) << 8 | $20
 	jp CopyVideoData ; if LCD is on, transfer during V-blank
 
-LoadHpBarAndStatusTilePatterns::
+; copies HP bar and status display tile patterns into VRAM
+LoadHpBarAndStatusTilePatterns:: ; 36c0 (0:36c0)
+IF GEN_2_GRAPHICS
+	callba LoadHPBarAndEXPBar ; @@@ this function is defined in main.asm
+	ret
+	ds $17 ; @@@ this shouldn't be necessary if all fixed addresses are removed from now on
+ELSE
 	ld a, [rLCDC]
 	bit 7, a ; is the LCD enabled?
 	jr nz, .on
@@ -3142,6 +3204,7 @@ LoadHpBarAndStatusTilePatterns::
 	ld hl, vChars2 + $620
 	ld bc, BANK(HpBarAndStatusGraphics) << 8 | $1e
 	jp CopyVideoData ; if LCD is on, transfer during V-blank
+ENDC
 
 
 FillMemory::
@@ -4501,7 +4564,7 @@ GBPalNormal::
 ; Reset BGP and OBP0.
 	ld a, %11100100 ; 3210
 	ld [rBGP], a
-	ld a, %11010000 ; 3100
+	ld a, %11100100 ; 3100
 	ld [rOBP0], a
 	ret
 
@@ -4741,3 +4804,57 @@ TextPredefs::
 	add_tx_pre BookOrSculptureText                  ; 40
 	add_tx_pre ElevatorText                         ; 41
 	add_tx_pre PokemonStuffText                     ; 42
+
+; Fade out from map screen
+GBFadeOut_Custom: ; @@@ Referenced in home/overworld.asm
+	ld hl,FadePal5
+	ld b,$04
+	jp GBFadeIncCommon
+
+InterruptWrapper: ; @@@ called in the hardware interrupts
+	push af
+	push bc
+	push de
+	ld a,[rSVBK]
+	ld b,a
+	xor a
+	ld [rSVBK],a
+	ld de,.return
+	push de
+	jp [hl]
+.return
+	ld a,b
+	ld [rSVBK],a
+	pop de
+	pop bc
+	pop af
+	pop hl
+	reti
+	
+; Whenever DelayFrame is called, update the sprites.
+; This is done here instead of at vblank to prevent sprite wobbliness when scrolling.
+; In some situations, DelayFrame is not called every frame, and this could be problematic.
+; But I think when sprites are being animated or moved around, it is always called.
+DelayFrameHook:
+	push bc
+	push de
+	push hl
+	ld a, [rSVBK]
+	ld b,a
+	xor a
+	ld [rSVBK],a
+	push bc ; Save wram bank
+	di
+	CALL_INDIRECT PrepareOAMData
+	jr z, .spritesDrawn
+	CALL_INDIRECT ColorNonOverworldSprites ; @@@ this is at color/sprites.asm
+.spritesDrawn
+	ei
+	pop af
+	ld [rSVBK],a ; Restore wram bank
+	ld a,1
+	ld [H_VBLANKOCCURRED],a
+	pop hl
+	pop de
+	pop bc
+	ret

@@ -24,7 +24,7 @@ LoadAttackSpritePalettes:
 	ld hl,AttackSpritePalettes
 
 LoadPaletteData:
-	ld de,W2_SprPaletteData ; @@@ defined at color/wram.asm
+	ld de,W2_SprPaletteData
 	ld b,$40
 .sprCopyLoop
 	ld a,[hli]
@@ -187,7 +187,7 @@ ClearSpritePaletteMap:
 	ret
 
 
-	ORG $2e, $6000 ; @@@ this needs to be fixed here until CallToBank is possibly modified
+	ORG $2e, $6000
 
 	jp ColorOverworldSprites
 

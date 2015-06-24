@@ -28,9 +28,6 @@ RefreshMapColors:
 	ret
 
 ; Refresh moving tiles
-
-; @@@ this org can be removed but UpdateMovingBgTiles in home/vcopy needs to account for it
-;	ORG $2c, $7000
 label_2c_l000::
 	push hl
 	ld hl,rSTAT
@@ -43,10 +40,8 @@ label_2c_l001:
 	ld [hli],a
 	dec c
 	jr nz,label_2c_l000
-	jp BackToUpdateMovingBgTiles ; jp $1ee9 this lands after the jp $7080 instruction at home/vcopy @@@ place this label there
+	jp BackToUpdateMovingBgTiles
 
-; @@@ this org can be removed but UpdateMovingBgTiles in home/vcopy needs to account for it	
-;	ORG $2c, $7080
 label_2c_l002::
 	push hl
 	ld hl,rSTAT
@@ -59,7 +54,7 @@ label_2c_l003:
 	ld [hli],a
 	dec c
 	jr nz,label_2c_l002
-	jp BackToUpdateMovingBgTiles ; jp $1ee9 this lands after the jp $7080 instruction at home/vcopy @@@ place this label there
+	jp BackToUpdateMovingBgTiles
 
 SECTION "bank2F",ROMX,BANK[$2F]
 
@@ -266,12 +261,10 @@ label_018:
 	ret
 
 
-; Unknown amount of free space before 2f:6000
-; This needs to be fixed at $6000 because of CallToBank	
 	ORG $2f, $6000
 ; Refresh map when scrolling
-; @@@ I don't think this is ever called anymore? This comes from the apparently unreferenced RefreshMapColorsScrolling (rst 00)
-
+; @@@ This comes from the apparently unreferenced RefreshMapColorsScrolling (rst 00)
+RefreshMapColorsScrolling:
 	ld a,$02
 	ld [rSVBK],a
 	ld a,$01
@@ -318,7 +311,6 @@ label_022:
 	pop hl
 	ret
 
-; @@@ referenced in home/vcopy.asm	
 DrawMapRow:
 	ld hl,wScreenEdgeTiles
 	ld a,[H_SCREENEDGEREDRAWADDR]
@@ -402,7 +394,6 @@ REPT 10
 ENDR
 	ret
 
-; @@@ referenced in home/vcopy.asm
 DrawMapColumn:
 	; Draw tiles
 	ld hl,wScreenEdgeTiles

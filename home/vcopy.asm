@@ -52,8 +52,6 @@ RedrawExposedScreenEdge:: ; 1d01 (0:1d01)
 	CALL_INDIRECT DrawMapRow
 	ret
 
-; SECTION "AutoBgMapTransfer", ROM0[$1d57] @@@ static address unreferenced
-
 ; This function automatically transfers tile number data from the tile map at
 ; C3A0 to VRAM during V-blank. Note that it only transfers one third of the
 ; background per V-blank. It cycles through which third it draws.
@@ -62,7 +60,7 @@ RedrawExposedScreenEdge:: ; 1d01 (0:1d01)
 ; the above function, RedrawExposedScreenEdge, is used when walking to
 ; improve efficiency.
 AutoBgMapTransfer: ; 1d57 (0:1d57)	; HAXED function
-	ld a,BANK(RefreshWindow) ; @@@ this is at color/refreshmaps.asm
+	ld a,BANK(RefreshWindow)
 	ld [$2000],a
 	call RefreshWindow
 	ld a,[H_LOADEDROMBANK]
@@ -91,17 +89,15 @@ _GbcPrepareVBlank:
 	push bc
 	push de
 	push hl
-	CALL_INDIRECT GbcPrepareVBlank ; @@@ this is at color/vblank.asm
+	CALL_INDIRECT GbcPrepareVBlank
 	pop hl
 	pop de
 	pop bc
 	pop af
 	reti
 
-; SECTION "JpPoint", ROM0[$1dde] @@@ static address unreferenced
-
 JpPoint:
-	jp _RefreshWindowInitial ; HAX @@@ this function is above
+	jp _RefreshWindowInitial ; HAX
 
 ; Copies [H_VBCOPYBGNUMROWS] rows from H_VBCOPYBGSRC to H_VBCOPYBGDEST.
 ; If H_VBCOPYBGSRC is XX00, the transfer is disabled.
@@ -310,8 +306,8 @@ UpdateMovingBgTiles::
 
 	and 4
 	; HAX
-	jp nz,label_2c_l000 ; this was $7000 @@@
-	jp label_2c_l002 ; this was $7080 @@@
+	jp nz,label_2c_l000
+	jp label_2c_l002 
 	
 BackToUpdateMovingBgTiles:: ; referenced in refreshmaps.asm	
 

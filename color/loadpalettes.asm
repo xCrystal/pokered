@@ -3,13 +3,10 @@ SECTION "bank2D",ROMX,BANK[$2D]
 MapPalettes:
 	INCLUDE "color/mappalettes.asm"
 
-; @@@ 4200 and 4300 are unreferenced as static addresses so the ORGs should be unnecessary	
-;	ORG $2d, $4200
 ; 8 bytes per map for 8 palettes, which are taken from MapPalettes.
 MapPaletteSets:
 	INCBIN "color/mappalettesets.bin"
 
-; @@@ ORG $2d, $4300
 ; $60 bytes for each map. Each byte is the palette number for a tile.
 ; Remaining $a0 tiles aren't part of the tileset and are set to zero.
 MapPaletteAssignments:
@@ -39,7 +36,7 @@ InitGbcMode: ; Sets double speed & clears extra memory
 	jp LoadBank1
 
 
-	ORG $2d, $6000 ; @@@ fixed for CallToBank
+	ORG $2d, $6000
 ; Load colors for new map and tile placement
 LoadTilesetPalette:
 	push bc
@@ -156,7 +153,6 @@ LoadTilesetPalette:
 	pop bc
 	ret
 
-; @@@	ORG $2d, $6200
 ; Towns have different roof colors while using the same tileset
 LoadTownPalette:
 	ld a,[rSVBK]
@@ -198,6 +194,4 @@ LoadTownPalette:
 	ld [rSVBK],a ; Restore wram bank
 	ret
 
-
-; @@@	ORG $2d, $7000
 	INCLUDE "color/roofpalettes.asm"

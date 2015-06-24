@@ -2329,7 +2329,7 @@ LoadMapData:: ; 1241 (0:1241)
 .vramCopyLoop
 	ld c,20
 .vramCopyInnerLoop
-	rst $08 ; call _RefreshMapColors ; HAX @@@
+	rst $08 ; call _RefreshMapColors HAX
 	dec c
 	jr nz,.vramCopyInnerLoop
 	ld a,32 - 20

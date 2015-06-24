@@ -1,9 +1,9 @@
 
 ; The rst vectors are unused.
 SECTION "rst 00", ROM0 [$00]
-RefreshMapColorsScrolling: ; @@@ is this referenced?
+_RefreshMapColorsScrolling: ; @@@ is this referenced?
 	push af
-	ld a,$2f
+	ld a,BANK(RefreshMapColorsScrolling)
 	jp CallToBank ; @@@ this calls 2f:6000
 	
 SECTION "rst 08", ROM0 [$08]
@@ -142,7 +142,7 @@ _LoadTilesetPatternsAndPalettes: ; $00e1
 	ld a, BANK(LoadTilesetPalette)
 loop3
 	ld [$2000],a
-	call CallToBank2 ; @@@ call $00f5, now $00f3 after removing the nops. Is $00f5 referenced anywhere else?
+	call CallToBank2 ; @@@ this will call 2d:6000
 	pop af
 	call LoadTilesetTilePatternData
 	ret
@@ -152,8 +152,8 @@ CallToBank: ; $00ef
 	pop af
 CallToBank2: ; $00f3	
 	push af
-	call $6000 ; @@@ this calls $6000 for banks 2c-2f?
-	ld a,[$ff00+$b8]
+	call $6000 ; @@@ this calls $6000 for banks 2c-2f
+	ld a,[H_LOADEDROMBANK]
 	ld [$2000],a
 	pop af
 	ret
@@ -176,7 +176,7 @@ SECTION "Main", ROM0
 
 Start::
 	cp GBC
-Start_2: ; @@@ is this ever referenced?	
+Start_2:
 	jr z, .gbc
 	xor a
 	jr .ok
@@ -811,7 +811,7 @@ UncompressMonSprite:: ; 1627 (0:1627)
 	jr z,.RecallBank
 	cp MON_GHOST
 	jr z,.RecallBank
-	ld a, [W_MONHPICBANK] ; Get bank from base stats @@@ this needs to be defined in wram.asm at d0d3
+	ld a, [W_MONHPICBANK] ; Get bank from base stats
 	jr .GotBank
 .RecallBank
 	ld a,b
@@ -3186,9 +3186,8 @@ LoadTextBoxTilePatterns::
 ; copies HP bar and status display tile patterns into VRAM
 LoadHpBarAndStatusTilePatterns:: ; 36c0 (0:36c0)
 IF GEN_2_GRAPHICS
-	callba LoadHPBarAndEXPBar ; @@@ this function is defined in main.asm
+	callba LoadHPBarAndEXPBar
 	ret
-;	ds $17 ; @@@ this shouldn't be necessary if all fixed addresses are removed till the end of the bank
 ELSE
 	ld a, [rLCDC]
 	bit 7, a ; is the LCD enabled?
@@ -4806,12 +4805,12 @@ TextPredefs::
 	add_tx_pre PokemonStuffText                     ; 42
 
 ; Fade out from map screen
-GBFadeOut_Custom: ; @@@ Referenced in home/overworld.asm
+GBFadeOut_Custom:
 	ld hl,FadePal5
 	ld b,$04
 	jp GBFadeIncCommon
 
-InterruptWrapper: ; @@@ called in the hardware interrupts
+InterruptWrapper:
 	push af
 	push bc
 	push de
@@ -4847,7 +4846,7 @@ DelayFrameHook:
 	di
 	CALL_INDIRECT PrepareOAMData
 	jr z, .spritesDrawn
-	CALL_INDIRECT ColorNonOverworldSprites ; @@@ this is at color/sprites.asm
+	CALL_INDIRECT ColorNonOverworldSprites
 .spritesDrawn
 	ei
 	pop af

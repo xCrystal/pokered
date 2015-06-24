@@ -97,7 +97,7 @@ DelayFrame::
 
 NOT_VBLANKED EQU 1
 
-	call DelayFrameHook ; @@@ at home.asm
+	call DelayFrameHook
 .halt
 	halt
 	ld a, [H_VBLANKOCCURRED]

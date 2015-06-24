@@ -4588,10 +4588,10 @@ GetHealthBarColor::
 ; Return at hl the palette of
 ; an HP bar e pixels long.
 	ld a, e
-	cp 27
+	cp 24
 	ld d, 0 ; green
 	jr nc, .gotColor
-	cp 10
+	cp 9
 	inc d ; yellow
 	jr nc, .gotColor
 	inc d ; red

@@ -119,7 +119,12 @@ StatusScreen: ; 12953 (4:6953)
 ;	call DrawLineBox ; Draws the box around types, ID No. and OT
 
 ; @@@ This prints the exp bar in the status screen
-; TODO Palettes are buggy
+; TODO Palettes are buggy I have no clue what I'm doing
+;	ld hl, wcf1d
+;	ld [hl], 3
+;	ld b, 1
+;	call GoPAL_SET
+
 ;	deCoord 17, 5
 ;	ld a, [wLoadedMonLevel]
 ;	ld [wBattleMonLevel], a

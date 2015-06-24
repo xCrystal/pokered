@@ -43,7 +43,7 @@ DrawHP_: ; 128fb (4:68fb)
 	ld a, [hFlags_0xFFF6]
 	bit 0, a
 	jr z, .printFractionBelowBar
-	ld bc, $9 ; right of bar
+	ld bc, $9
 	jr .printFraction
 .printFractionBelowBar
 	ld bc, SCREEN_WIDTH + 1 ; below bar
@@ -103,49 +103,64 @@ StatusScreen: ; 12953 (4:6953)
 	ld a, [hTilesetType]
 	push af
 	xor a
-	ld [hTilesetType], a
-	hlCoord 19, 1
-	ld bc, $060a
+	ld [hTilesetType], a	
+	hlCoord 18, 3 ; @@@ 19, 1
+	ld bc, $0208 ; @@@ $060a
 	call DrawLineBox ; Draws the box around name, HP and status
-	ld de, $fffa
-	add hl, de
+	hlCoord 3, 7 ; @@@ 2, 7
+;	ld de, $fffa	
+;	add hl, de
 	ld [hl], $f2 ; . after No ("." is a different one)
 	dec hl
 	ld [hl], "№"
-	hlCoord 19, 9
-	ld bc, $0806
-	call DrawLineBox ; Draws the box around types, ID No. and OT
-	hlCoord 10, 9
+; @@@ I don't want this
+;	hlCoord 19, 9
+;	ld bc, $0806
+;	call DrawLineBox ; Draws the box around types, ID No. and OT
+
+; @@@ This prints the exp bar in the status screen
+; TODO Palettes are buggy
+;	deCoord 17, 5
+;	ld a, [wLoadedMonLevel]
+;	ld [wBattleMonLevel], a
+;	push af
+;	callba PrintEXPBar
+;	pop af
+;	ld [wLoadedMonLevel], a
+; @@@	
+
+	hlCoord 1, 9 ; @@@ 10, 9
 	ld de, Type1Text
-	call PlaceString ; "TYPE1/"
-	hlCoord 11, 3
+	call PlaceString ; "TYPE1/ TYPE2/ IDNo/ OT/"
+	hlCoord 10, 3
 	predef DrawHP
 	ld hl, wcf25
 	call GetHealthBarColor
 	ld b, $3
 	call GoPAL_SET ; SGB palette
-	hlCoord 16, 6
+	hlCoord 10, 2 ; @@@ 16, 10 
 	ld de, wLoadedMonStatus
 	call PrintStatusCondition
-	jr nz, .StatusWritten ; 0x129fc $9
-	hlCoord 16, 6
-	ld de, OKText
-	call PlaceString ; "OK"
+; @@@ I don't want this	
+;	jr nz, .StatusWritten ; 0x129fc $9
+;	hlCoord 16, 6
+;	ld de, OKText
+;	call PlaceString ; "OK"
 .StatusWritten
-	hlCoord 9, 6
-	ld de, StatusText
-	call PlaceString ; "STATUS/"
+;	hlCoord 9, 6
+;	ld de, StatusText
+;	call PlaceString ; "STATUS/"
 	hlCoord 14, 2
 	call PrintLevel ; Pokémon level
 	ld a, [W_MONHDEXNUM]
 	ld [wd11e], a
 	ld [wd0b5], a
 	predef IndexToPokedex
-	hlCoord 3, 7
+	hlCoord 4, 7 ; @@@ 3, 7
 	ld de, wd11e
 	ld bc, $8103 ; Zero-padded, 3
 	call PrintNumber ; Pokémon no.
-	hlCoord 11, 10
+	hlCoord 2, 10 ; @@@ 11, 10
 	predef PrintMonType
 	ld hl, NamePointers2 ; $6a9d
 	call .unk_12a7e
@@ -157,9 +172,9 @@ StatusScreen: ; 12953 (4:6953)
 	call .unk_12a7e
 	ld d, h
 	ld e, l
-	hlCoord 12, 16
+	hlCoord 3, 16 ; @@@ 12, 16
 	call PlaceString ; OT
-	hlCoord 12, 14
+	hlCoord 3, 14 ; @@@ 12, 14
 	ld de, wLoadedMonOTID
 	ld bc, $8205 ; 5
 	call PrintNumber ; ID Number
@@ -245,19 +260,19 @@ PrintStatsBox: ; 12ae4 (4:6ae4)
 	ld a, d
 	and a ; a is 0 from the status screen
 	jr nz, .DifferentBox ; 0x12ae6 $12
-	hlCoord 0, 8
-	ld b, $8
-	ld c, $8
+	hlCoord 10, 6 ; @@@ 0, 8
+	ld b, $a ; @@@ $8
+	ld c, $8 
 	call TextBoxBorder ; Draws the box
-	hlCoord 1, 9 ; Start printing stats from here
+	hlCoord 11, 7 ; Start printing stats from here @@@ 1, 9
 	ld bc, $0019 ; Number offset
 	jr .PrintStats ; 0x12af8 $10
-.DifferentBox
-	hlCoord 9, 2
-	ld b, $8
-	ld c, $9
+.DifferentBox ; this is used during battle (on level up)
+	hlCoord 9, 0 ; @@@ 9, 2
+	ld b, $a ; @@@ $8
+	ld c, $9 
 	call TextBoxBorder
-	hlCoord 11, 3
+	hlCoord 11, 1 ; @@@ 11, 3
 	ld bc, $0018
 .PrintStats
 	push bc
@@ -272,9 +287,11 @@ PrintStatsBox: ; 12ae4 (4:6ae4)
 	call PrintStat
 	ld de, wLoadedMonDefense
 	call PrintStat
-	ld de, wLoadedMonSpeed
-	call PrintStat
 	ld de, wLoadedMonSpecial
+	call PrintStat
+	ld de, wLoadedMonSpecial ; @@@ Sp def will go here
+	call PrintStat
+	ld de, wLoadedMonSpeed	
 	jp PrintNumber
 PrintStat
 	push hl
@@ -287,8 +304,9 @@ PrintStat
 StatsText: ; 12b3a (4:6b3a)
 	db   "ATTACK"
 	next "DEFENSE"
-	next "SPEED"
-	next "SPECIAL@"
+	next "SPC.ATK"
+	next "SPC.DEF"
+	next "SPEED@"
 
 StatusScreen2: ; 12b57 (4:6b57)
 	ld a, [hTilesetType]
@@ -305,10 +323,10 @@ StatusScreen2: ; 12b57 (4:6b57)
 	call CopyData
 	callab FormatMovesString
 	hlCoord 9, 2
-	ld bc, $050a
+	ld bc, $060b ; @@@ $050a
 	call ClearScreenArea ; Clear under name
-	hlCoord 19, 3
-	ld [hl], $78
+;	hlCoord 19, 3
+;	ld [hl], $78
 	hlCoord 0, 8
 	ld b, $8
 	ld c, $12
@@ -461,7 +479,11 @@ EXPPointsText: ; 12caf (4:6caf)
 	db "EXP POINTS", $4e
 
 LevelUpText: ; 12cba (4:6cba)
-	db "LEVEL UP@"
+	db "LEVEL UP", $4e
+	
+; @@@ Default no item text used as Placeholder for now
+ItemText: ; 12cba (4:6cba)
+	db "NO ITEM@"	
 
 Func_12cc3: ; 12cc3 (4:6cc3)
 	ld bc, $a

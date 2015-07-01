@@ -118,22 +118,6 @@ StatusScreen: ; 12953 (4:6953)
 ;	ld bc, $0806
 ;	call DrawLineBox ; Draws the box around types, ID No. and OT
 
-; @@@ This prints the exp bar in the status screen
-; TODO Palettes are buggy I have no clue what I'm doing
-;	ld hl, wcf1d
-;	ld [hl], 3
-;	ld b, 1
-;	call GoPAL_SET
-
-;	deCoord 17, 5
-;	ld a, [wLoadedMonLevel]
-;	ld [wBattleMonLevel], a
-;	push af
-;	callba PrintEXPBar
-;	pop af
-;	ld [wLoadedMonLevel], a
-; @@@	
-
 	hlCoord 1, 9 ; @@@ 10, 9
 	ld de, Type1Text
 	call PlaceString ; "TYPE1/ TYPE2/ IDNo/ OT/"
@@ -143,6 +127,20 @@ StatusScreen: ; 12953 (4:6953)
 	call GetHealthBarColor
 	ld b, $3
 	call GoPAL_SET ; SGB palette
+
+; @@@ This prints the exp bar in the status screen
+; TODO Palettes are buggy I have no clue what I'm doing	
+	deCoord 17, 5
+	ld a, [wLoadedMonLevel]
+	ld [wBattleMonLevel], a
+	push af
+	callba PrintEXPBar
+	pop af
+	ld [wLoadedMonLevel], a
+;	ld b, $3
+;	call GoPAL_SET ; SGB palette
+; @@@		
+	
 	hlCoord 10, 2 ; @@@ 16, 10 
 	ld de, wLoadedMonStatus
 	call PrintStatusCondition

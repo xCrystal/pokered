@@ -6839,6 +6839,11 @@ PlayMoveAnimation: ; 3ef07 (f:6f07)
 	predef_jump MoveAnimation
 
 InitBattle: ; 3ef12 (f:6f12)
+; entry point
+; this is called on every step
+; and when initiating a trainer battle, in which case W_CUROPPONENT is non-0
+; this is the trainer class value, loaded from wEngagedTrainerClass 
+; at InitBattleEnemyParameters (bank 0)
 	ld a, [W_CUROPPONENT]
 	and a
 	jr z, asm_3ef23
@@ -6850,17 +6855,20 @@ InitOpponent: ; 3ef18 (f:6f18)
 	jr asm_3ef3d
 asm_3ef23: ; 3ef23 (f:6f23)
 	ld a, [wd732]
-	bit 1, a
+	bit 1, a ; debug mode where all wild encounters are disabled
 	jr z, .asm_3ef2f
 	ld a, [hJoyHeld]
-	bit 1, a ; B button pressed?
+	bit 1, a ; if this debug mode is on, pressing B disables all encounters
 	ret nz
 .asm_3ef2f
-	ld a, [wNumberOfNoRandomBattleStepsLeft]
+	ld a, [wNumberOfNoRandomBattleStepsLeft] ; how many steps until we can have a wild encounter
+	; 3 is saved to wNumberOfNoRandomBattleStepsLeft when returning from a battle in function EnterMap
+	; OverworldLoopLessDelay.moveAhead decs it on every step, also if it's 0, bit 0 of d72c is reset
 	and a
 	ret nz
-	callab TryDoWildEncounter
-	ret nz
+	callab TryDoWildEncounter ; this is at 4:7858. Factors in map we're at, encounter slots,
+	; tile we're at etc, it's where the cinnabar missingno glitch is at
+	ret nz ; no wild encounter so return outside of core.asm
 asm_3ef3d: ; 3ef3d (f:6f3d)
 	ld a, [wMapPalOffset]
 	push af

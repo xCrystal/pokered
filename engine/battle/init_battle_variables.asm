@@ -1,4 +1,10 @@
 InitBattleVariables: ; 525af (14:65af)
+; clear cd6a, cc2b, cc2c, cc2d, cc2e, cf1d, cf1e, ccd3-cd0e,
+; wBattleResult, wListScrollOffset, wCriticalHitOrOHKO, wBattleMonSpecies,
+; wPartyGainExpFlags, wPlayerMonNumber, wEscapedFromBattle, wMapPalOffset.
+; load 1 into ccd9
+; check if safari battle
+; @@@TODO add wDamage and... 
 	ld a, [hTilesetType]
 	ld [wd0d4], a
 	xor a

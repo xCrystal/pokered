@@ -1,3 +1,8 @@
+; @@@TODO
+; fix "missingno" glitch 
+; modify encounter values
+; possibly add more/different matching tiles (eventually)
+
 ; try to initiate a wild pokemon encounter
 ; returns success in Z
 TryDoWildEncounter: ; 13870 (4:7870)

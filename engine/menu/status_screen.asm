@@ -129,7 +129,6 @@ StatusScreen: ; 12953 (4:6953)
 	call GoPAL_SET ; SGB palette
 
 ; @@@ This prints the exp bar in the status screen
-; TODO Palettes are buggy I have no clue what I'm doing	
 	deCoord 17, 5
 	ld a, [wLoadedMonLevel]
 	ld [wBattleMonLevel], a
@@ -137,8 +136,6 @@ StatusScreen: ; 12953 (4:6953)
 	callba PrintEXPBar
 	pop af
 	ld [wLoadedMonLevel], a
-;	ld b, $3
-;	call GoPAL_SET ; SGB palette
 ; @@@		
 	
 	hlCoord 10, 2 ; @@@ 16, 10 

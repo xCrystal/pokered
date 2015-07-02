@@ -6849,6 +6849,8 @@ InitBattle: ; 3ef12 (f:6f12)
 	jr z, asm_3ef23
 
 InitOpponent: ; 3ef18 (f:6f18)
+; save W_CUROPPONENT into wcf91 and wEnemyMonSpecies2 and branch ahead
+; for trn battles, actual value of enemy species will be saved later into wEnemyMonSpecies2
 	ld a, [W_CUROPPONENT]
 	ld [wcf91], a
 	ld [wEnemyMonSpecies2], a
@@ -6876,39 +6878,49 @@ asm_3ef3d: ; 3ef3d (f:6f3d)
 	ld a, [hl]
 	push af
 	res 1, [hl]
+; clear cd6a, cc2b, cc2c, cc2d, cc2e, cf1d, cf1e, ccd3-cd0e,
+; wBattleResult, wListScrollOffset, wCriticalHitOrOHKO, wBattleMonSpecies,
+; wPartyGainExpFlags, wPlayerMonNumber, wEscapedFromBattle, wMapPalOffset.
+; load 1 into ccd9
+; check if safari battle
 	callab InitBattleVariables
-	ld a, [wEnemyMonSpecies2]
+	ld a, [wEnemyMonSpecies2] ; this may contain the trainer class id as well (>=C8) 
 	sub $c8
 	jp c, InitWildBattle
-	ld [W_TRAINERCLASS], a
-	call GetTrainerInformation
+	
+; InitTrainerBattle:
+	ld [W_TRAINERCLASS], a ; trainer class id, once c8 is decremented
+	call GetTrainerInformation ; at home.asm reads name, pic, money from trainer class at W_TRAINERCLASS
 	callab ReadTrainer
+; This clears W_PLAYERDISABLEDMOVE, wPlayerStatsToDouble, ...ToHalve, and the three W_PLAYERBATTSTATUS
+; @@@TODO these resets could be merged into InitBattleVariables?
+; Also plays the battle transition
 	call DoBattleTransitionAndInitBattleVariables
 	call _LoadTrainerPic
 	xor a
-	ld [wEnemyMonSpecies2], a
-	ld [$ffe1], a
+	ld [wEnemyMonSpecies2], a ; W_CUROPPONENT was also saved at wcf91
+	ld [$ffe1], a ; this is used for pics stuff?
 	dec a
-	ld [wAICount], a
+	ld [wAICount], a ; $ff, times remaining for use of item from AI @@@ I dont need this (see trainer_ai.asm)
 	hlCoord 12, 0
-	predef Func_3f0c6
+	predef Func_3f0c6 ; sprite stuff apparently
 	ld a, $ff
-	ld [wEnemyMonPartyPos], a
+	ld [wEnemyMonPartyPos], a ; reset position of cur enemy mon in the enemy party (00 is mon at pos 1) 
 	ld a, $2
-	ld [W_ISINBATTLE], a
-	jp InitBattle_Common
+	ld [W_ISINBATTLE], a ; load trainer battle into W_ISINBATTLE (@@@ this could use a constant)
+	jp InitBattle_Common ; common for wild and trn
 
 InitWildBattle: ; 3ef8b (f:6f8b)
 	ld a, $1
-	ld [W_ISINBATTLE], a
-	call LoadEnemyMonData
-	call DoBattleTransitionAndInitBattleVariables
+	ld [W_ISINBATTLE], a ; wild battle
+	call LoadEnemyMonData ; @@@TODO check and debug this
+	call DoBattleTransitionAndInitBattleVariables ; shared with InitTrainerBattle, see above
 	ld a, [W_CUROPPONENT]
-	cp MAROWAK
+	cp MAROWAK ; any wild marowak turns into ghost @@@ remove this
 	jr z, .isGhost
-	call IsGhostBattle
+	call IsGhostBattle ; else check the map and if we got silph scope @@@ i dont think ill want this
 	jr nz, .isNoGhost
-.isGhost
+.isGhost ; ghost battle @@@ i dont think ill want this for anything
 	ld hl, W_MONHSPRITEDIM
 	ld a, $66
 	ld [hli], a   ; write sprite dimensions
@@ -6937,13 +6949,13 @@ InitWildBattle: ; 3ef8b (f:6f8b)
 	pop af
 	ld [wcf91], a
 	jr .spriteLoaded
-.isNoGhost
+.isNoGhost ; no ghost battle
 	ld de, vFrontPic
 	call LoadMonFrontSprite ; load mon sprite
 .spriteLoaded
 	xor a
-	ld [W_TRAINERCLASS], a
-	ld [$ffe1], a
+	ld [W_TRAINERCLASS], a ; is a wild battle so trainer class is 0 @@@ could be cleared before
+	ld [$ffe1], a ; pic stuff apparently, shared with trn battle, @@@ could possibly be merged into InitBattle_Common
 	hlCoord 12, 0
 	predef Func_3f0c6
 

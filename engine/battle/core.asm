@@ -1901,14 +1901,9 @@ DrawPlayerHUDAndHPBar: ; 3cd60 (f:4d60)
 	ld [hl], $73
 	ld de, wBattleMonNick
 	hlCoord 10, 7
-IF GEN_2_GRAPHICS
 	call PlaceString
 	deCoord 17, 11	
 	call PrintEXPBar
-ELSE
-	call CenterMonName
-	call PlaceString
-ENDC	
 	ld hl, wBattleMonSpecies
 	ld de, wLoadedMon
 	ld bc, $c
@@ -1969,11 +1964,7 @@ DrawEnemyHUDAndHPBar: ; 3cdec (f:4dec)
 	hlCoord 1, 0
 	call CenterMonName
 	call PlaceString
-IF GEN_2_GRAPHICS
-	hlCoord 2, 1 ; @@@ 6, 1
-ELSE
- 	hlCoord 4, 1
-ENDC
+	hlCoord 2, 1
 	push hl
 	inc hl
 	ld de, wEnemyMonStatus
@@ -6415,13 +6406,7 @@ LoadPlayerBackPic: ; 3ec92 (f:6c92)
 .next
 	ld a, BANK(RedPicBack)
 	call UncompressSpriteFromDE
-
-IF GEN_2_GRAPHICS
 	call LoadMonBackSpriteHook ; No pixelated backsprites
-ELSE
- 	predef ScaleSpriteByTwo
-ENDC	
-	
 	ld hl, wOAMBuffer
 	xor a
 	ld [$FF8B], a ; initial tile number
@@ -6452,12 +6437,7 @@ ENDC
 	add e ; increase X by width of tile
 	ld e, a
 	dec b
-	jr nz, .loop
-IF GEN_2_GRAPHICS
-ELSE
-	ld de, vBackPic
-	call InterlaceMergeSpriteBuffers
-ENDC	
+	jr nz, .loop	
 	ld a, $a
 	ld [$0], a
 	xor a
@@ -7144,15 +7124,7 @@ LoadMonBackPic: ; 3f103 (f:7103)
 	ld hl,  W_MONHBACKSPRITE - W_MONHEADER
 	call UncompressMonSprite
 	ld a, $3
-
-IF GEN_2_GRAPHICS
 	call LoadMonBackSpriteHook
-ELSE
-	call Predef ; ScaleSpriteByTwo
-	ld de, vBackPic
-	call InterlaceMergeSpriteBuffers ; combine the two buffers to a single 2bpp sprite
-ENDC
-	
 	ld hl, vSprites
 	ld de, vBackPic
 	ld c, (2*SPRITEBUFFERSIZE)/16 ; count of 16-byte chunks to be copied
@@ -8791,7 +8763,6 @@ LoadMonBackSpriteHook:
 	ld c,a
 	jp LoadUncompressedSpriteData
 
-IF GEN_2_GRAPHICS
 PrintEXPBar:
 	push de
 	call CalcEXPBarPixelLength
@@ -8985,4 +8956,3 @@ BattleMonPartyAttr:
 	ld a, [wPlayerMonNumber]
 	ld bc, wPartyMon2 - wPartyMon1
 	jp AddNTimes
-ENDC	

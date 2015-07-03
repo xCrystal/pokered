@@ -1,4 +1,4 @@
-GEN_2_GRAPHICS EQU 1
+NEW EQU 0
 
 INCLUDE "macros.asm"
 

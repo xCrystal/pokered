@@ -17,11 +17,7 @@ LoadPartyPokeballGfx: ; 3a85d (e:685d)
 	jp CopyVideoData
 
 SetupOwnPartyPokeballs: ; 3a869 (e:6869)
-IF GEN_2_GRAPHICS
-	call PlayerHUDHAX
-ELSE
-	call PlacePlayerHUDTiles
-ENDC	
+	call PlayerHUDHAX	
 	ld hl, wPartyMon1
 	ld de, wPartyCount ; wPartyCount
 	call SetupPokeballs
@@ -142,11 +138,7 @@ PlaceEnemyHUDTiles: ; 3a919 (e:6919)
 	ld bc, $3
 	call CopyData
 	hlCoord 1, 2
-IF GEN_2_GRAPHICS
-	jp EnemyHUDHax
-ELSE	
-	ld de, $1
-ENDC	
+	jp EnemyHUDHax	
 	jr PlaceHUDTiles
 
 EnemyBattleHUDGraphicsTiles: ; 3a92d (e:692d)
@@ -201,7 +193,6 @@ PokeballTileGraphics:: ; 3a97e (e:697e)
 	INCBIN "gfx/pokeball.2bpp"
 
 ; HAX	
-IF GEN_2_GRAPHICS
 PlayerHUDHAX:
 	ld hl, PlayerHUDTileMap
 	jp PlayerHUDUpdateDone
@@ -233,5 +224,4 @@ EnemyHUDHax:
 	pop hl
 .notWildBattle
 	ld de, $0001
-	jp EnemyHUDUpdateDone
-ENDC	
+	jp EnemyHUDUpdateDone	

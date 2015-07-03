@@ -9,11 +9,7 @@ db WATER ; species type 1
 db ICE ; species type 2
 db 75 ; catch rate
 db 176 ; base exp yield
-IF GEN_2_GRAPHICS
-	INCBIN "pic/gsmon/dewgong.pic",0,1 ; 77, sprite dimensions
-ELSE
-	INCBIN "pic/bmon/dewgong.pic",0,1 ; 66, sprite dimensions
-ENDC
+INCBIN "pic/gsmon/dewgong.pic",0,1 ; 77, sprite dimensions
 dw DewgongPicFront
 dw DewgongPicBack
 ; attacks known at lvl 0

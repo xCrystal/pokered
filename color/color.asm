@@ -74,13 +74,8 @@ BuildBattlePalPacket:
 	ld e,3
 	callba LoadSGBPalette
 
-IF GEN_2_GRAPHICS
 	; Player exp bar
 	ld d, PAL_EXP
-ELSE
-	; Black palette
-	ld d, PAL_BLACK
-ENDC
 	ld e,4
 	callba LoadSGBPalette
 
@@ -146,7 +141,6 @@ ENDC
 	dec b
 	jr nz,.eDrawLine
 
-IF GEN_2_GRAPHICS
 	; Player exp bar
 	ld hl, W2_TilesetPaletteMap + 10 + 11 * 20
 	ld b, 8
@@ -155,7 +149,6 @@ IF GEN_2_GRAPHICS
 	ld [hli], a
 	dec b
 	jr nz, .expLoop
-ENDC
 
 	; Wait 2 frames before updating palettes
 	ld c,2
@@ -269,7 +262,6 @@ BuildStatusScreenPalPacket:
 	dec b
 	jr nz,.drawRow
 	
-IF GEN_2_GRAPHICS
 	; Player exp bar
 	ld hl, W2_TilesetPaletteMap + 10 + 5 * 20
 	ld b, 8
@@ -278,7 +270,6 @@ IF GEN_2_GRAPHICS
 	ld [hli], a
 	dec b
 	jr nz, .expLoop
-ENDC	
 
 	xor a
 	ld [rSVBK],a
@@ -414,11 +405,7 @@ SendPalPacket_Titlescreen:
 	ld e,3
 	callba LoadSGBPalette
 
-IF GEN_2_GRAPHICS
 	ld d, PAL_HERO
-ELSE
-	ld d, PAL_REDMON
-ENDC
 	ld e,0
 	callba LoadSGBPalette_Sprite
 
@@ -466,11 +453,7 @@ SendPalPacket_NidorinoIntro:
 	ld a,2
 	ld [rSVBK],a
 
-IF GEN_2_GRAPHICS
 	ld d, PAL_NIDORINO
-ELSE
-	ld d, PAL_PURPLEMON
-ENDC
 	ld e,0
 	callba LoadSGBPalette_Sprite
 
@@ -702,11 +685,7 @@ BuildTrainerCardPalPacket:
 	ld e,3
 	callba LoadSGBPalette
 	; Red's palette
-	IF GEN_2_GRAPHICS
-		ld d, PAL_HERO
-	ELSE
-		ld d, PAL_REDMON
-	ENDC
+	ld d, PAL_HERO
 	ld e,4
 	callba LoadSGBPalette
 

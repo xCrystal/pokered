@@ -80,15 +80,10 @@ DeterminePaletteIDOutOfBattle: ; 71f9d (1c:5f9d) - DeterminePaletteID without st
 	ld hl, MonsterPalettes
 	and a
 
-IF GEN_2_GRAPHICS ; Trainers are given individualized palettes
+; Trainers are given individualized palettes
 	jr nz,.getPaletteID ; Check if trainer?
 	ld a,[W_TRAINERCLASS] ; Get trainer ID
 	ld hl, TrainerPalettes
-ELSE ; Trainers are given a single palette (PAL_MEWMON)
-	REPT 8
-	nop
-	ENDR
-ENDC
 
 .getPaletteID
 	ld e, a
@@ -116,11 +111,7 @@ DetermineBackSpritePaletteID_NoStatusCheck:
 	and a
 	jr nz,.getPaletteID ; Check if trainer?
 
-IF GEN_2_GRAPHICS
 	ld a, PAL_HERO
-ELSE
-	ld a, PAL_REDMON
-ENDC
 	ret
 .getPaletteID
 	ld e, a

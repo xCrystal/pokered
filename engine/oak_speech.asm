@@ -53,12 +53,7 @@ OakSpeech: ; 6115 (1:6115)
 	call SpecialWarpIn
 	xor a
 	ld [hTilesetType],a
-	
-IF GEN_2_GRAPHICS
 	ld a, PAL_OAK
-ELSE
-	ld a, PAL_BROWNMON
-ENDC
 	call GotPalID ; HAX
 	; ld a,[$D732]
 	; bit 1,a ; XXX when is bit 1 set?

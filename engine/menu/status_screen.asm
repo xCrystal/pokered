@@ -104,21 +104,15 @@ StatusScreen: ; 12953 (4:6953)
 	push af
 	xor a
 	ld [hTilesetType], a	
-	hlCoord 18, 3 ; @@@ 19, 1
-	ld bc, $0208 ; @@@ $060a
+	hlCoord 18, 3
+	ld bc, $0208
 	call DrawLineBox ; Draws the box around name, HP and status
-	hlCoord 3, 7 ; @@@ 2, 7
-;	ld de, $fffa	
-;	add hl, de
+	hlCoord 3, 7
 	ld [hl], $f2 ; . after No ("." is a different one)
 	dec hl
 	ld [hl], "№"
-; @@@ I don't want this
-;	hlCoord 19, 9
-;	ld bc, $0806
-;	call DrawLineBox ; Draws the box around types, ID No. and OT
 
-	hlCoord 1, 9 ; @@@ 10, 9
+	hlCoord 1, 9
 	ld de, Type1Text
 	call PlaceString ; "TYPE1/ TYPE2/ IDNo/ OT/"
 	hlCoord 10, 3
@@ -128,7 +122,7 @@ StatusScreen: ; 12953 (4:6953)
 	ld b, $3
 	call GoPAL_SET ; SGB palette
 
-; @@@ This prints the exp bar in the status screen
+; This prints the exp bar in the status screen
 	deCoord 17, 5
 	ld a, [wLoadedMonLevel]
 	ld [wBattleMonLevel], a
@@ -136,31 +130,23 @@ StatusScreen: ; 12953 (4:6953)
 	callba PrintEXPBar
 	pop af
 	ld [wLoadedMonLevel], a
-; @@@		
+;		
 	
-	hlCoord 10, 2 ; @@@ 16, 10 
+	hlCoord 10, 2
 	ld de, wLoadedMonStatus
 	call PrintStatusCondition
-; @@@ I don't want this	
-;	jr nz, .StatusWritten ; 0x129fc $9
-;	hlCoord 16, 6
-;	ld de, OKText
-;	call PlaceString ; "OK"
 .StatusWritten
-;	hlCoord 9, 6
-;	ld de, StatusText
-;	call PlaceString ; "STATUS/"
 	hlCoord 14, 2
 	call PrintLevel ; Pokémon level
 	ld a, [W_MONHDEXNUM]
 	ld [wd11e], a
 	ld [wd0b5], a
 	predef IndexToPokedex
-	hlCoord 4, 7 ; @@@ 3, 7
+	hlCoord 4, 7
 	ld de, wd11e
 	ld bc, $8103 ; Zero-padded, 3
 	call PrintNumber ; Pokémon no.
-	hlCoord 2, 10 ; @@@ 11, 10
+	hlCoord 2, 10
 	predef PrintMonType
 	ld hl, NamePointers2 ; $6a9d
 	call .unk_12a7e
@@ -172,9 +158,9 @@ StatusScreen: ; 12953 (4:6953)
 	call .unk_12a7e
 	ld d, h
 	ld e, l
-	hlCoord 3, 16 ; @@@ 12, 16
+	hlCoord 3, 16
 	call PlaceString ; OT
-	hlCoord 3, 14 ; @@@ 12, 14
+	hlCoord 3, 14
 	ld de, wLoadedMonOTID
 	ld bc, $8205 ; 5
 	call PrintNumber ; ID Number
@@ -260,19 +246,19 @@ PrintStatsBox: ; 12ae4 (4:6ae4)
 	ld a, d
 	and a ; a is 0 from the status screen
 	jr nz, .DifferentBox ; 0x12ae6 $12
-	hlCoord 10, 6 ; @@@ 0, 8
-	ld b, $a ; @@@ $8
+	hlCoord 10, 6
+	ld b, $a
 	ld c, $8 
 	call TextBoxBorder ; Draws the box
-	hlCoord 11, 7 ; Start printing stats from here @@@ 1, 9
+	hlCoord 11, 7 ; Start printing stats from here
 	ld bc, $0019 ; Number offset
 	jr .PrintStats ; 0x12af8 $10
 .DifferentBox ; this is used during battle (on level up)
-	hlCoord 9, 0 ; @@@ 9, 2
-	ld b, $a ; @@@ $8
+	hlCoord 9, 0
+	ld b, $a
 	ld c, $9 
 	call TextBoxBorder
-	hlCoord 11, 1 ; @@@ 11, 3
+	hlCoord 11, 1
 	ld bc, $0018
 .PrintStats
 	push bc
@@ -323,7 +309,7 @@ StatusScreen2: ; 12b57 (4:6b57)
 	call CopyData
 	callab FormatMovesString
 	hlCoord 9, 2
-	ld bc, $060b ; @@@ $050a
+	ld bc, $060b
 	call ClearScreenArea ; Clear under name
 ;	hlCoord 19, 3
 ;	ld [hl], $78

@@ -643,6 +643,8 @@ GetMonHeader:: ; 1537 (0:1537)
 	push af
 	ld a,[wd0b5]
 	ld [wd11e],a
+
+; @@@ i shouldn't need this	
 	ld de,FossilKabutopsPic
 	ld b,$66 ; size of Kabutops fossil and Ghost sprites
 	cp a,FOSSIL_KABUTOPS ; Kabutops fossil
@@ -656,13 +658,14 @@ GetMonHeader:: ; 1537 (0:1537)
 	jr z,.specialID
 	cp a,MEW
 	jr z,.mew
+; @@@	
 	predef IndexToPokedex   ; convert pokemon ID in [wd11e] to pokedex number
-	ld a,[wd11e]
+	ld a,[wd11e] ; pokedex number
 	dec a
-	ld bc,28
+	ld bc,28 ; size of base stats data
 	ld hl,BaseStats
 	call AddNTimes
-	ld de,W_MONHEADER
+	ld de,W_MONHEADER ; d0b8 - d0d3
 	ld bc,28
 	call CopyData
 	jr .done

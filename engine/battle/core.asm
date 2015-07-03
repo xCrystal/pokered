@@ -6189,19 +6189,27 @@ GetCurrentMove: ; 3eabe (f:6abe)
 	jp CopyStringToCF4B
 
 LoadEnemyMonData: ; 3eb01 (f:6b01)
+; this is executed on init wild battle,
+; and also when enemy trn sends a new mon?
 	ld a, [wLinkState]
-	cp LINK_STATE_BATTLING
-	jp z, LoadEnemyMonFromParty
+	cp LINK_STATE_BATTLING ; battling on a link trn battle?
+	jp z, LoadEnemyMonFromParty ; load mon from other player party if in a link battle
+; not link battle	
 	ld a, [wEnemyMonSpecies2]
-	ld [wEnemyMonSpecies], a
-	ld [wd0b5], a
+	ld [wEnemyMonSpecies], a ; inside the enemy mon struct
+	ld [wd0b5], a ; "used as a temp storage area for Pokemon Species, and other Pokemon/Battle related things"
+; copies the base stat data of a pokemon to W_MONHDEXNUM (W_MONHEADER)
+; INPUT:[wd0b5] = pokemon ID	
 	call GetMonHeader
 	ld a, [W_ENEMYBATTSTATUS3]
 	bit Transformed, a ; is enemy mon transformed?
 	ld hl, wcceb ; copied DVs from when it used Transform
 	ld a, [hli]
 	ld b, [hl]
-	jr nz, .storeDVs
+	jr nz, .storeDVs ; jump if bit transformed is set
+	                 ; should only be relevant in tranier battles, not wild, 
+					 ; W_ENEMYBATTSTATUS3 is cleared on exiting a battle as well as initing trn battle.
+					 ; @@@ but when would a mon be sent transformed?
 	ld a, [W_ISINBATTLE]
 	cp $2 ; is it a trainer battle?
 ; fixed DVs for trainer mon
@@ -6213,17 +6221,17 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld b, a
 	call BattleRandom
 .storeDVs
-	ld hl, wEnemyMonDVs
+	ld hl, wEnemyMonDVs ; enemy mon struct
 	ld [hli], a
 	ld [hl], b
 	ld de, wEnemyMonLevel
-	ld a, [W_CURENEMYLVL]
+	ld a, [W_CURENEMYLVL] ; level was loaded at 04:78e7 from TryDoWildEncounter
 	ld [de], a
 	inc de
 	ld b, $0
 	ld hl, wEnemyMonHP
 	push hl
-	call CalcStats
+	call CalcStats ; @@@debug this
 	pop hl
 	ld a, [W_ISINBATTLE]
 	cp $2 ; is it a trainer battle?
@@ -6846,16 +6854,16 @@ InitBattle: ; 3ef12 (f:6f12)
 ; at InitBattleEnemyParameters (bank 0)
 	ld a, [W_CUROPPONENT]
 	and a
-	jr z, asm_3ef23
-
+	jr z, WildEncounterTest ; if W_CUROPPONENT is 0, there's not a pending trainer battle, 
+	                        ; so test for wild encounter
 InitOpponent: ; 3ef18 (f:6f18)
 ; save W_CUROPPONENT into wcf91 and wEnemyMonSpecies2 and branch ahead
 ; for trn battles, actual value of enemy species will be saved later into wEnemyMonSpecies2
 	ld a, [W_CUROPPONENT]
 	ld [wcf91], a
 	ld [wEnemyMonSpecies2], a
-	jr asm_3ef3d
-asm_3ef23: ; 3ef23 (f:6f23)
+	jr asm_3ef3d ; it's a trn battle so skip wild encounter test
+WildEncounterTest: ; 3ef23 (f:6f23)
 	ld a, [wd732]
 	bit 1, a ; debug mode where all wild encounters are disabled
 	jr z, .asm_3ef2f
@@ -6869,7 +6877,7 @@ asm_3ef23: ; 3ef23 (f:6f23)
 	and a
 	ret nz
 	callab TryDoWildEncounter ; this is at 4:7858. Factors in map we're at, encounter slots,
-	; tile we're at etc, it's where the cinnabar missingno glitch is at
+	; tile we're at etc, it's where the cinnabar missingno glitch is at (see wild_encounters.asm)
 	ret nz ; no wild encounter so return outside of core.asm
 asm_3ef3d: ; 3ef3d (f:6f3d)
 	ld a, [wMapPalOffset]
@@ -6883,7 +6891,7 @@ asm_3ef3d: ; 3ef3d (f:6f3d)
 ; wPartyGainExpFlags, wPlayerMonNumber, wEscapedFromBattle, wMapPalOffset.
 ; load 1 into ccd9
 ; check if safari battle
-	callab InitBattleVariables
+	callab InitBattleVariables ; init_battle_variables.asm
 	ld a, [wEnemyMonSpecies2] ; this may contain the trainer class id as well (>=C8) 
 	sub $c8
 	jp c, InitWildBattle
@@ -6986,11 +6994,14 @@ InitBattle_Common: ; 3efeb (f:6feb)
 	hlCoord 1, 0
 	ld bc, $40a
 	call ClearScreenArea
-	call ClearSprites
+	call ClearSprites ; up to here draw sprites, clean screen and related stuff
 	ld a, [W_ISINBATTLE]
 	dec a ; is it a wild battle?
 	call z, DrawEnemyHUDAndHPBar ; draw enemy HUD and HP bar if it's a wild battle
-	call StartBattle
+	; because it's the enemy is already a mon pic, not a trainer pic
+	call StartBattle ; battle actual starting point (executes main loop)
+; @@@
+; end of battle	and return out of core.asm
 	callab EndOfBattle
 	pop af
 	ld [wd358], a

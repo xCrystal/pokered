@@ -26,7 +26,7 @@ InitBattleVariables: ; 525af (14:65af)
 	ld [hli], a
 	ld [hl], a
 	ld hl, wccd3
-	ld b, $3c
+	ld b, wPlayerMonUnmodifiedLevel - wccd3
 .loop
 	ld [hli], a
 	dec b

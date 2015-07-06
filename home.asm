@@ -3671,7 +3671,7 @@ CalcStats:: ; 3936 (0:3936)
 	ld [de], a
 	inc de
 	ld a, c
-	cp $5
+	cp $5 ; @@@this has to be 6 to account for spdef
 	jr nz, .statsLoop
 	ret
 
@@ -3684,11 +3684,11 @@ CalcStat:: ; 394a (0:394a)
 	push de
 	push bc
 	ld a, b
-	ld d, a
+	ld d, a ; consider stat exp at d
 	push hl
 	ld hl, W_MONHEADER
 	ld b, $0
-	add hl, bc
+	add hl, bc ; c is stat num
 	ld a, [hl]          ; read base value of stat
 	ld e, a
 	pop hl
@@ -3734,7 +3734,7 @@ CalcStat:: ; 394a (0:394a)
 	jr z, .getSpeedIV
 	cp $5
 	jr z, .getSpecialIV
-.getHpIV
+.getHpIV ; @@@ separate IV for hp and spdef
 	push bc
 	ld a, [hl]  ; Atk IV
 	swap a

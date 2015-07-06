@@ -1,4 +1,5 @@
 ReadTrainer: ; 39c53 (e:5c53)
+; @@@ trainer types from gsc, possibly differentiating item/no item only (full movesets always)
 
 ; don't change any moves in a link battle
 	ld a,[wLinkState]

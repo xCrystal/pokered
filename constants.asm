@@ -1,4 +1,4 @@
-NEW EQU 0
+NEW EQU 1
 
 INCLUDE "macros.asm"
 

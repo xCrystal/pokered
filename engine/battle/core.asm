@@ -6204,6 +6204,7 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld a, [W_ISINBATTLE]
 	cp $2 ; is it a trainer battle?
 ; fixed DVs for trainer mon
+; @@@ change this
 	ld a, $98
 	ld b, $88
 	jr z, .storeDVs
@@ -6219,14 +6220,15 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld a, [W_CURENEMYLVL] ; level was loaded at 04:78e7 from TryDoWildEncounter
 	ld [de], a
 	inc de
-	ld b, $0
+	ld b, $0 ; b = consider stat exp? ; 0 = do not consider it @@@
 	ld hl, wEnemyMonHP
 	push hl
-	call CalcStats ; @@@debug this
+	call CalcStats ; @@@debug this at home.asm
 	pop hl
 	ld a, [W_ISINBATTLE]
 	cp $2 ; is it a trainer battle?
 	jr z, .copyHPAndStatusFromPartyData
+; wild battle	
 	ld a, [W_ENEMYBATTSTATUS3]
 	bit Transformed, a ; is enemy mon transformed?
 	jr nz, .copyTypes ; if transformed, jump
@@ -6297,14 +6299,15 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	dec de
 	xor a
 	ld [wHPBarMaxHP], a
-	predef WriteMonMoves ; get moves based on current level
+	predef WriteMonMoves ; get moves based on current level ; @@@ dont get the last four, get them at random
+	; and based on exp etc rather than level
 .loadMovePPs
 	ld hl, wEnemyMonMoves
 	ld de, wEnemyMonSpecial + 1
 	predef LoadMovePPs
 	ld hl, W_MONHBASESTATS
 	ld de, wEnemyMonBaseStats
-	ld b, $5
+	ld b, $5 ; @@@ spdef
 .copyBaseStatsLoop
 	ld a, [hli]
 	ld [de], a
@@ -6315,7 +6318,7 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld a, [hli]
 	ld [de], a
 	inc de
-	ld a, [hl]     ; base exp
+	ld a, [hl] ; base exp
 	ld [de], a
 	ld a, [wEnemyMonSpecies2]
 	ld [wd11e], a

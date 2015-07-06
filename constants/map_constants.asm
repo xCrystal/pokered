@@ -1,3 +1,4 @@
+; cities
 PALLET_TOWN     EQU $00
 VIRIDIAN_CITY   EQU $01
 PEWTER_CITY     EQU $02
@@ -10,6 +11,8 @@ CINNABAR_ISLAND EQU $08
 INDIGO_PLATEAU  EQU $09
 SAFFRON_CITY    EQU $0A
 ; unused        EQU $0B
+
+; outdoor maps (routes)
 ROUTE_1         EQU $0C
 ROUTE_2         EQU $0D
 ROUTE_3         EQU $0E
@@ -35,6 +38,8 @@ ROUTE_22        EQU $21
 ROUTE_23        EQU $22
 ROUTE_24        EQU $23
 ROUTE_25        EQU $24
+
+; indoor maps 
 REDS_HOUSE_1F EQU $25
 REDS_HOUSE_2F EQU $26
 BLUES_HOUSE EQU $27

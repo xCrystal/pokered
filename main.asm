@@ -4956,7 +4956,13 @@ INCLUDE "engine/turn_sprite.asm"
 INCLUDE "engine/menu/start_sub_menus.asm"
 INCLUDE "engine/items/tms.asm"
 INCLUDE "engine/battle/end_of_battle.asm"
+
+IF NEW
+INCLUDE "engine/battle/wild_encounters_new.asm"
+ELSE
 INCLUDE "engine/battle/wild_encounters.asm"
+ENDC
+
 INCLUDE "engine/battle/moveEffects/recoil_effect.asm"
 INCLUDE "engine/battle/moveEffects/conversion_effect.asm"
 INCLUDE "engine/battle/moveEffects/haze_effect.asm"

@@ -3539,7 +3539,7 @@ CheckPlayerStatusConditions: ; 3d854 (f:5854)
 	jr z,.ThrashingAboutCheck
 	xor a
 	ld [W_PLAYERMOVENUM],a
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	ld b,a
 	ld c,[hl]
@@ -3566,10 +3566,10 @@ CheckPlayerStatusConditions: ; 3d854 (f:5854)
 	ld a,[hld]
 	add a
 	ld b,a
-	ld [W_DAMAGE + 1],a
+	ld [W_PLAYERDAMAGE + 1],a
 	ld a,[hl]
 	rl a ; double the damage
-	ld [W_DAMAGE],a
+	ld [W_PLAYERDAMAGE],a
 	or b
 	jr nz,.next
 	ld a,1
@@ -3927,7 +3927,7 @@ PrintMoveFailureText: ; 3dbe2 (f:5be2)
 	ret nz
 
 	; if you get here, the mon used jump kick or hi jump kick and missed
-	ld hl, W_DAMAGE ; since the move missed, W_DAMAGE will always contain 0 at this point.
+	ld hl, W_PLAYERDAMAGE ; since the move missed, W_PLAYERDAMAGE will always contain 0 at this point.
 	                ; Thus, recoil damage will always be equal to 1 
 	                ; even if it was intended to be potential damage/8.
 	ld a, [hli]
@@ -4214,7 +4214,7 @@ IgnoredOrdersText: ; 3ddca (f:5dca)
 ; sets b, c, d, and e for the CalculateDamage routine in the case of an attack by the player mon
 GetDamageVarsForPlayerAttack: ; 3ddcf (f:5dcf)
 	xor a
-	ld hl, W_DAMAGE ; damage to eventually inflict, initialise to zero
+	ld hl, W_PLAYERDAMAGE ; damage to eventually inflict, initialise to zero
 	ldi [hl], a
 	ld [hl], a
 	ld hl, W_PLAYERMOVEPOWER
@@ -4326,7 +4326,7 @@ GetDamageVarsForPlayerAttack: ; 3ddcf (f:5dcf)
 
 ; sets b, c, d, and e for the CalculateDamage routine in the case of an attack by the enemy mon
 GetDamageVarsForEnemyAttack: ; 3de75 (f:5e75)
-	ld hl, W_DAMAGE ; damage to eventually inflict, initialise to zero
+	ld hl, W_PLAYERDAMAGE ; damage to eventually inflict, initialise to zero
 	xor a
 	ld [hli], a
 	ld [hl], a
@@ -4569,7 +4569,7 @@ CalculateDamage: ; 3df65 (f:5f65)
 	ld b, 4
 	call Divide
 
-	ld hl, W_DAMAGE
+	ld hl, W_PLAYERDAMAGE
 	ld b, [hl]
 	ld a, [H_QUOTIENT + 3]
 	add b
@@ -4777,11 +4777,11 @@ HandleCounterMove: ; 3e093 (f:6093)
 	xor a
 	ret
 .counterableType
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	or [hl]
 	ret z ; If we made it here, Counter still misses if the last move used in battle did no damage to its target.
-	      ; W_DAMAGE is shared by both players, so Counter may strike back damage dealt by the Counter user itself 
+	      ; W_PLAYERDAMAGE is shared by both players, so Counter may strike back damage dealt by the Counter user itself 
 	      ; if the conditions meet, even though 99% of the times damage will come from the target.
 ; if it did damage, double it
 	ld a,[hl]
@@ -4817,7 +4817,7 @@ ApplyAttackToEnemyPokemon: ; 3e0df (f:60df)
 .superFangEffect
 ; set the damage to half the target's HP
 	ld hl,wEnemyMonHP
-	ld de,W_DAMAGE
+	ld de,W_PLAYERDAMAGE
 	ld a,[hli]
 	srl a
 	ld [de],a
@@ -4862,14 +4862,14 @@ ApplyAttackToEnemyPokemon: ; 3e0df (f:60df)
 	jr nc,.loop
 	ld b,a
 .storeDamage ; store damage value at b
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	xor a
 	ld [hli],a
 	ld a,b
 	ld [hl],a
 
 ApplyDamageToEnemyPokemon: ; 3e142 (f:6142)
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	ld b,a
 	ld a,[hl]
@@ -4893,7 +4893,7 @@ ApplyDamageToEnemyPokemon: ; 3e142 (f:6142)
 	sbc b
 	ld [wEnemyMonHP],a
 	jr nc,.animateHpBar
-; if more damage was done than the current HP, zero the HP and set the damage (W_DAMAGE)
+; if more damage was done than the current HP, zero the HP and set the damage (W_PLAYERDAMAGE)
 ; equal to how much HP the pokemon had before the attack
 	ld a,[wHPBarOldHP+1]
 	ld [hli],a
@@ -4936,7 +4936,7 @@ ApplyAttackToPlayerPokemon: ; 3e1a0 (f:61a0)
 .superFangEffect
 ; set the damage to half the target's HP
 	ld hl,wBattleMonHP
-	ld de,W_DAMAGE
+	ld de,W_PLAYERDAMAGE
 	ld a,[hli]
 	srl a
 	ld [de],a
@@ -4981,14 +4981,14 @@ ApplyAttackToPlayerPokemon: ; 3e1a0 (f:61a0)
 	jr nc,.loop
 	ld b,a
 .storeDamage
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	xor a
 	ld [hli],a
 	ld a,b
 	ld [hl],a
 
 ApplyDamageToPlayerPokemon: ; 3e200 (f:6200)
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	ld b,a
 	ld a,[hl]
@@ -5013,7 +5013,7 @@ ApplyDamageToPlayerPokemon: ; 3e200 (f:6200)
 	ld [wBattleMonHP],a
 	ld [wHPBarNewHP+1],a
 	jr nc,.animateHpBar
-; if more damage was done than the current HP, zero the HP and set the damage (W_DAMAGE)
+; if more damage was done than the current HP, zero the HP and set the damage (W_PLAYERDAMAGE)
 ; equal to how much HP the pokemon had before the attack
 	ld a,[wHPBarOldHP+1]
 	ld [hli],a
@@ -5059,7 +5059,7 @@ AttackSubstitute: ; 3e25e (f:625e)
 	ld de,wPlayerSubstituteHP
 	ld bc,W_PLAYERBATTSTATUS2
 .applyDamageToSubstitute
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	and a
 	jr nz,.substituteBroke ; damage > 0xFF always breaks substitutes
@@ -5069,7 +5069,7 @@ AttackSubstitute: ; 3e25e (f:625e)
 	ld [de],a
 	ret nc
 .substituteBroke
-; If the target's Substitute breaks, W_DAMAGE isn't updated with the amount of HP 
+; If the target's Substitute breaks, W_PLAYERDAMAGE isn't updated with the amount of HP 
 ; the Substitute had before being attacked.
 	ld h,b
 	ld l,c
@@ -5299,7 +5299,7 @@ AdjustDamageForMoveType: ; 3e3a5 (f:63a5)
 	jr .skipSameTypeAttackBonus
 .sameTypeAttackBonus
 ; if the move type matches one of the attacker's types
-	ld hl,W_DAMAGE + 1
+	ld hl,W_PLAYERDAMAGE + 1
 	ld a,[hld]
 	ld h,[hl]
 	ld l,a    ; hl = damage
@@ -5310,9 +5310,9 @@ AdjustDamageForMoveType: ; 3e3a5 (f:63a5)
 	add hl,bc ; hl = floor(1.5 * damage)
 ; store damage
 	ld a,h
-	ld [W_DAMAGE],a
+	ld [W_PLAYERDAMAGE],a
 	ld a,l
-	ld [W_DAMAGE + 1],a
+	ld [W_PLAYERDAMAGE + 1],a
 	ld hl,wDamageMultipliers
 	set 7,[hl]
 .skipSameTypeAttackBonus
@@ -5345,7 +5345,7 @@ AdjustDamageForMoveType: ; 3e3a5 (f:63a5)
 	ld [wDamageMultipliers],a
 	xor a
 	ld [H_MULTIPLICAND],a
-	ld hl,W_DAMAGE
+	ld hl,W_PLAYERDAMAGE
 	ld a,[hli]
 	ld [H_MULTIPLICAND + 1],a
 	ld a,[hld]
@@ -5520,7 +5520,7 @@ MoveHitTest: ; 3e56b (f:656b)
 	ret
 .moveMissed
 	xor a
-	ld hl,W_DAMAGE ; zero the damage
+	ld hl,W_PLAYERDAMAGE ; zero the damage
 	ld [hli],a
 	ld [hl],a
 	inc a
@@ -5611,7 +5611,7 @@ CalcHitChance: ; 3e624 (f:6624)
 
 ; multiplies damage by a random percentage from ~85% to 100%
 RandomizeDamage: ; 3e687 (f:6687)
-	ld hl, W_DAMAGE
+	ld hl, W_PLAYERDAMAGE
 	ld a, [hli]
 	and a
 	jr nz, .DamageGreaterThanOne
@@ -5640,7 +5640,7 @@ RandomizeDamage: ; 3e687 (f:6687)
 	call Divide ; divide the result by 255
 ; store the modified damage
 	ld a, [H_QUOTIENT + 2]
-	ld hl, W_DAMAGE
+	ld hl, W_PLAYERDAMAGE
 	ld [hli], a
 	ld a, [H_QUOTIENT + 3]
 	ld [hl], a
@@ -6051,7 +6051,7 @@ CheckEnemyStatusConditions: ; 3e88f (f:688f)
 	jr z, .checkIfThrashingAbout
 	xor a
 	ld [W_ENEMYMOVENUM], a
-	ld hl, W_DAMAGE
+	ld hl, W_PLAYERDAMAGE
 	ld a, [hli]
 	ld b, a
 	ld c, [hl]
@@ -6078,10 +6078,10 @@ CheckEnemyStatusConditions: ; 3e88f (f:688f)
 	ld a, [hld]
 	add a
 	ld b, a
-	ld [W_DAMAGE + 1], a
+	ld [W_PLAYERDAMAGE + 1], a
 	ld a, [hl]
 	rl a ; double the damage
-	ld [W_DAMAGE], a
+	ld [W_PLAYERDAMAGE], a
 	or b
 	jr nz, .next
 	ld a, $1

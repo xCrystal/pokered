@@ -5908,7 +5908,12 @@ INCLUDE "scripts/mansion4.asm"
 INCLUDE "data/mapObjects/mansion4.asm"
 Mansion4Blocks: INCBIN "maps/mansion4.blk"
 
+IF NEW
+INCLUDE "engine/battle/init_battle_variables_new.asm"
+ELSE
 INCLUDE "engine/battle/init_battle_variables.asm"
+ENDC
+
 INCLUDE "engine/battle/moveEffects/paralyze_effect.asm"
 
 INCLUDE "engine/overworld/card_key.asm"

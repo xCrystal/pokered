@@ -1,5 +1,5 @@
 OneHitKOEffect_: ; 33f57 (c:7f57)
-	ld hl, W_DAMAGE 
+	ld hl, W_PLAYERDAMAGE 
 	xor a
 	ld [hli], a
 	ld [hl], a ; set the damage output to zero
@@ -24,7 +24,7 @@ OneHitKOEffect_: ; 33f57 (c:7f57)
 	ld a, [hl]
 	sbc b
 	jr c, .userIsSlower
-	ld hl, W_DAMAGE 
+	ld hl, W_PLAYERDAMAGE 
 	ld a, $ff
 	ld [hli], a
 	ld [hl], a

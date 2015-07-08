@@ -92,7 +92,7 @@ TryDoWildEncounter: ; 13870 (4:7870)
 .waterEncounter	
 	ld hl, W_WATERMONS
 
-; load mon number and level into ram and repel check	
+; load mon number and level into ram and do repel check	
 .gotWildEncounterType
 	ld b, $0
 	add hl, bc

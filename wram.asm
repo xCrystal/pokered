@@ -875,6 +875,11 @@ wUpdateSpritesEnabled:: ; cfcb
 ; $01 enables UpdateSprites; anything else disables it
 	ds 1
 
+wEnemyMonSpecies2:: ; cfd8
+	ds 1
+wBattleMonSpecies2:: ; cfd9
+	ds 1	
+	
 W_ENEMYMOVENUM:: ; cfcc
 	ds 1
 W_ENEMYMOVEEFFECT:: ; cfcd
@@ -900,11 +905,6 @@ W_PLAYERMOVEACCURACY:: ; cfd6
 W_PLAYERMOVEMAXPP:: ; cfd7
 	ds 1
 
-
-wEnemyMonSpecies2:: ; cfd8
-	ds 1
-wBattleMonSpecies2:: ; cfd9
-	ds 1
 
 wEnemyMonNick:: ds 11 ; cfda
 
@@ -973,10 +973,6 @@ W_ISINBATTLE:: ; d057
 ; trainer battle, this is 2
 	ds 1
 
-wPartyGainExpFlags:: ; d058
-; flags that indicate which party members should be be given exp when GainExperience is called
-	flag_array 6
-
 W_CUROPPONENT:: ; d059
 ; in a wild battle, this is the species of pokemon
 ; in a trainer battle, this is the trainer class + $C8
@@ -988,15 +984,6 @@ W_BATTLETYPE:: ; d05a
 ; in safari battle, this is 2
 	ds 1
 
-wDamageMultipliers:: ; d05b
-; bits 0-6: Effectiveness
-   ;  $0 = immune
-   ;  $5 = not very effective
-   ;  $a = neutral
-   ; $14 = super-effective
-; bit 7: STAB
-	ds 1
-
 W_LONEATTACKNO:: ; d05c
 ; which entry in LoneAttacks to use
 W_GYMLEADERNO:: ; d05c
@@ -1006,6 +993,19 @@ W_TRAINERNO:: ; d05d
 ; which instance of [youngster, lass, etc] is this?
 	ds 1
 
+wPartyGainExpFlags:: ; d058
+; flags that indicate which party members should be be given exp when GainExperience is called
+	flag_array 6	
+	
+wDamageMultipliers:: ; d05b
+; bits 0-6: Effectiveness
+   ;  $0 = immune
+   ;  $5 = not very effective
+   ;  $a = neutral
+   ; $14 = super-effective
+; bit 7: STAB
+	ds 1	
+	
 wCriticalHitOrOHKO:: ; d05e
 ; $00 = normal attack
 ; $01 = critical hit
@@ -1329,10 +1329,11 @@ wd0d4:: ds 3 ; temp storage for hTilesetType
 W_MONHPADDING:: ; d0d7
 
 
-W_DAMAGE:: ; d0d7
+W_PLAYERDAMAGE:: ; d0d7
 	ds 2
-
-ds 2
+	
+W_ENEMYDAMAGE:: ; d0d9	
+	ds 2
 
 wRepelRemainingSteps:: ; wd0db
     ds 1

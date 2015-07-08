@@ -1,4 +1,5 @@
 NEW EQU 1
+CORE_NEW EQU 1
 
 INCLUDE "macros.asm"
 

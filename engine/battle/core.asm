@@ -6178,7 +6178,8 @@ GetCurrentMove: ; 3eabe (f:6abe)
 	call GetName
 	ld de, wcd6d
 	jp CopyStringToCF4B
-
+	
+IF !CORE_NEW
 LoadEnemyMonData: ; 3eb01 (f:6b01)
 ; this is executed on init wild battle,
 ; and also when enemy trn sends a new mon?
@@ -6348,9 +6349,10 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	dec b
 	jr nz, .statModLoop
 	ret
+ENDC	
 
 ; calls BattleTransition to show the battle transition animation and initializes some battle variables
-DoBattleTransitionAndInitBattleVariables: ; 3ec32 (f:6c32)
+DoBattleTransition: ; 3ec32 (f:6c32)
 	ld a, [wLinkState]
 	cp LINK_STATE_BATTLING
 	jr nz, .next
@@ -6829,6 +6831,9 @@ PlayMoveAnimation: ; 3ef07 (f:6f07)
 	call Delay3
 	predef_jump MoveAnimation
 
+; %%%%%	
+IF !CORE_NEW
+	
 InitBattle: ; 3ef12 (f:6f12)
 ; entry point
 ; this is called on every step
@@ -6886,7 +6891,7 @@ asm_3ef3d: ; 3ef3d (f:6f3d)
 ; This clears W_PLAYERDISABLEDMOVE, wPlayerStatsToDouble, ...ToHalve, and the three W_PLAYERBATTSTATUS
 ; @@@TODO these resets could be merged into InitBattleVariables?
 ; Also plays the battle transition
-	call DoBattleTransitionAndInitBattleVariables
+	call DoBattleTransition
 	call _LoadTrainerPic
 	xor a
 	ld [wEnemyMonSpecies2], a ; W_CUROPPONENT was also saved at wcf91
@@ -6905,7 +6910,7 @@ InitWildBattle: ; 3ef8b (f:6f8b)
 	ld a, $1
 	ld [W_ISINBATTLE], a ; wild battle
 	call LoadEnemyMonData ; @@@TODO check and debug this
-	call DoBattleTransitionAndInitBattleVariables ; shared with InitTrainerBattle, see above
+	call DoBattleTransition ; shared with InitTrainerBattle, see above
 	ld a, [W_CUROPPONENT]
 	cp MAROWAK ; any wild marowak turns into ghost @@@ remove this
 	jr z, .isGhost
@@ -6996,7 +7001,7 @@ InitBattle_Common: ; 3efeb (f:6feb)
 	ret
 .emptyString
 	db "@"
-
+	
 _LoadTrainerPic: ; 3f04b (f:704b)
 ; wd033-wd034 contain pointer to pic
 	ld a, [wTrainerPicPointer] ; wd033
@@ -7014,6 +7019,11 @@ _LoadTrainerPic: ; 3f04b (f:704b)
 	ld a, $77
 	ld c, a
 	jp LoadUncompressedSpriteData
+	
+ELSE
+INCLUDE "engine/battle/core_new.asm"
+; %%%%%
+ENDC	
 
 ; unreferenced
 Func_3f069: ; 3f069 (f:7069)

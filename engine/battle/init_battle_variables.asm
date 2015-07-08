@@ -4,7 +4,6 @@ InitBattleVariables: ; 525af (14:65af)
 ; wPartyGainExpFlags, wPlayerMonNumber, wEscapedFromBattle, wMapPalOffset.
 ; load 1 into ccd9
 ; check if safari battle
-; @@@TODO add wDamage and... 
 	ld a, [hTilesetType]
 	ld [wd0d4], a
 	xor a

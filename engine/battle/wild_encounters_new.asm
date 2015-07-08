@@ -1,9 +1,7 @@
 ; @@@TODO
-; fix "missingno" glitch 
 ; modify encounter values
 ; possibly add more/different matching tiles (eventually)
 ; repel prevents encounters if the leading party mon's level is higher than the wild mon
-
 
 CheckIfCanEncounter:
 	ld c, [hl]

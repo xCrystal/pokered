@@ -5439,8 +5439,11 @@ INCLUDE "engine/battle/moveEffects/reflect_light_screen_effect.asm"
 
 SECTION "bankF",ROMX,BANK[$F]
 
+IF CORE_NEW
+INCLUDE "engine/battle/core_old.asm"
+ELSE
 INCLUDE "engine/battle/core.asm"
-
+ENDC
 
 SECTION "bank10",ROMX,BANK[$10]
 

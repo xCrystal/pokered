@@ -174,26 +174,7 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	jr nz, .statModLoop
 	ret
 
-	
-_LoadTrainerPic: ; 3f04b (f:704b)
-; wd033-wd034 contain pointer to pic
-	ld a, [wTrainerPicPointer] ; wd033
-	ld e, a
-	ld a, [wTrainerPicPointer + 1] ; wd034
-	ld d, a ; de contains pointer to trainer pic
-	ld a, [wLinkState]
-	and a
-	ld a, Bank(TrainerPics) ; this is where all the trainer pics are (not counting Red's)
-	jr z, .loadSprite
-	ld a, Bank(RedPicFront)
-.loadSprite
-	call UncompressSpriteFromDE
-	ld de, vFrontPic
-	ld a, $77
-	ld c, a
-	jp LoadUncompressedSpriteData
 
-	
 ; check W_CUROPPONENT to determine if wild or trainer battle
 InitBattle:
 	ld a, [W_CUROPPONENT]
@@ -314,5 +295,10 @@ InitBattle_Common:
 .emptyString
 	db "@"
 	
-	
+
+; StartBattle:
+	ld hl, wEnemyMon1HP
+	ld bc, wEnemyMon2 - wEnemyMon1 - 1
+	ld d, $3
+.findFirstAliveEnemyMonLoop	
 	

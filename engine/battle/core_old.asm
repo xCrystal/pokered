@@ -749,7 +749,7 @@ FaintEnemyPokemon ; 0x3c567
 	call ClearScreenArea
 	ld a, [W_ISINBATTLE]
 	dec a
-	jr z, .wild_win
+	jr z, .sfxplayed
 	xor a
 	ld [wc0f1], a
 	ld [wc0f2], a
@@ -761,12 +761,6 @@ FaintEnemyPokemon ; 0x3c567
 	jr z, .sfxwait
 	ld a, (SFX_08_43 - SFX_Headers_08) / 3 ; SFX_DROP
 	call PlaySound
-	call WaitForSoundToFinish
-	jr .sfxplayed
-.wild_win
-	call EndLowHealthAlarm
-	ld a, MUSIC_DEFEATED_WILD_MON
-	call PlayBattleVictoryMusic
 .sfxplayed
 	ld hl, wBattleMonHP
 	ld a, [hli]
@@ -780,7 +774,19 @@ FaintEnemyPokemon ; 0x3c567
 	call AnyPartyAlive
 	ld a, d
 	and a
-	ret z
+	jr nz, .moreAliveMons
+	ret
+.moreAliveMons
+	ld a, [W_ISINBATTLE]
+	dec a
+	jr nz, .trainer
+	
+; wild_win
+	call WaitForSoundToFinish
+	call EndLowHealthAlarm	
+	ld a, MUSIC_DEFEATED_WILD_MON
+	call PlayBattleVictoryMusic	
+.trainer
 	ld hl, EnemyMonFaintedText
 	call PrintText
 	call PrintEmptyString

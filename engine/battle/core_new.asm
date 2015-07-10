@@ -7,33 +7,60 @@ SendOutMon: ; 3cc91 (f:4c91)
 	or [hl] ; is enemy mon HP zero?
 	jp z, .skipDrawingEnemyHUDAndHPBar; if HP is zero, skip drawing the HUD and HP bar
 	call DrawEnemyHUDAndHPBar
+	
 .skipDrawingEnemyHUDAndHPBar
 	call DrawPlayerHUDAndHPBar
 	predef LoadMonBackPic
+	
 	xor a
 	ld [$ffe1], a
+	
 	ld hl, wcc2d
 	ld [hli], a
 	ld [hl], a
+	
 	ld [wBoostExpByExpAll], a
 	ld [wDamageMultipliers], a
 	ld [W_PLAYERMOVENUM], a
+	
+; player and enemy used moves	
 	ld hl, wPlayerUsedMove
 	ld [hli], a
 	ld [hl], a
+	
+; player battle statuses	
 	ld hl, wPlayerStatsToDouble
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
 	ld [hl], a
+	
+; player disable/minimize	
 	ld [W_PLAYERDISABLEDMOVE], a
 	ld [wPlayerDisabledMoveNumber], a
 	ld [wPlayerHasUsedMinimize], a
+	
 	ld b, $1
 	call GoPAL_SET
+	
+; enemy's trapping move battstatus	
 	ld hl, W_ENEMYBATTSTATUS1
 	res UsingTrappingMove, [hl]
+	
+; p/e damage addresses
+	ld hl, W_PLAYERDAMAGE
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	
+; player bide accum. damage
+	ld hl, wPlayerBideAccumulatedDamage
+	ld [hli], a
+	ld [hl], a	
+
 	ld a, $1
 	ld [H_WHOSETURN], a
 	ld a, POOF_ANIM
@@ -755,4 +782,6 @@ StartBattle:
 	call LoadBattleMonFromParty
 	call LoadScreenTilesFromBuffer1
 	call SendOutMon
-	jp MainInBattleLoop	
+	jp MainInBattleLoop
+	
+; MainInBattleLoop:	

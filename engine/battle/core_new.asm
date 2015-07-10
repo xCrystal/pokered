@@ -1,71 +1,74 @@
 WILD_BATTLE EQU 1
 TRAINER_BATTLE EQU 2
+NUM_STATS EQU 5
 
 ;;;BattleCore:
 
-; @@@ not modified anything yet
 LoadEnemyMonData: ; 3eb01 (f:6b01)
-; this is executed on init wild battle,
-; and also when enemy trn sends a new mon
+; load enemy mon data of wEnemyMonSpecies2 into the wEnemyMon struct
+; this is executed on init wild battle, and also when enemy trainer sends a new mon
 	ld a, [wLinkState]
-	cp LINK_STATE_BATTLING ; battling on a link trn battle?
+	cp LINK_STATE_BATTLING
 	jp z, LoadEnemyMonFromParty ; load mon from other player party if in a link battle
+	
 ; not link battle	
 	ld a, [wEnemyMonSpecies2]
 	ld [wEnemyMonSpecies], a ; inside the enemy mon struct
-	ld [wd0b5], a ; "used as a temp storage area for Pokemon Species, and other Pokemon/Battle related things"
+	
+	ld [wd0b5], a
 ; copies the base stat data of a pokemon to W_MONHDEXNUM (W_MONHEADER)
 ; INPUT:[wd0b5] = pokemon ID	
 	call GetMonHeader
-	ld a, [W_ENEMYBATTSTATUS3]
-	bit Transformed, a ; is enemy mon transformed?
-	ld hl, wcceb ; copied DVs from when it used Transform
-	ld a, [hli]
-	ld b, [hl]
-	jr nz, .storeDVs ; jump if bit transformed is set
-	                 ; should only be relevant in tranier battles, not wild, 
-					 ; W_ENEMYBATTSTATUS3 is cleared on exiting a battle as well as initing trn battle.
-					 ; @@@ but when would a mon be sent transformed?
+	
+; transform will no longer copy DVs
+
+; @@@ fixed DVs for trainer mon
 	ld a, [W_ISINBATTLE]
-	cp $2 ; is it a trainer battle?
-; fixed DVs for trainer mon
-; @@@ change this
+	cp TRAINER_BATTLE
 	ld a, $98
 	ld b, $88
 	jr z, .storeDVs
+	
 ; random DVs for wild mon
 	call BattleRandom
 	ld b, a
 	call BattleRandom
+	
 .storeDVs
 	ld hl, wEnemyMonDVs ; enemy mon struct
 	ld [hli], a
 	ld [hl], b
+
+; level	(for wild, was loaded during TryDoWildEncounter)
 	ld de, wEnemyMonLevel
-	ld a, [W_CURENEMYLVL] ; level was loaded at 04:78e7 from TryDoWildEncounter
+	ld a, [W_CURENEMYLVL]
 	ld [de], a
+	
+; calculate stats (b = consider stat exp? ; 0 = do not consider it @@@)	
 	inc de
-	ld b, $0 ; b = consider stat exp? ; 0 = do not consider it @@@
+	ld b, $0
 	ld hl, wEnemyMonHP
 	push hl
-	call CalcStats ; @@@debug this at home.asm
+	call CalcStats ; home.asm
 	pop hl
+
+; trainer mon could be damaged or statused, so read from party	
 	ld a, [W_ISINBATTLE]
-	cp $2 ; is it a trainer battle?
+	cp TRAINER_BATTLE 
 	jr z, .copyHPAndStatusFromPartyData
+	
 ; wild battle	
-	ld a, [W_ENEMYBATTSTATUS3]
-	bit Transformed, a ; is enemy mon transformed?
-	jr nz, .copyTypes ; if transformed, jump
-; if it's a wild mon and not transformed, init the current HP to max HP and the status to 0
+; init the current HP to max HP and the status to 0
 	ld a, [wEnemyMonMaxHP]
 	ld [hli], a
 	ld a, [wEnemyMonMaxHP+1]
 	ld [hli], a
 	xor a
 	inc hl
-	ld [hl], a ; init status to 0
+	ld [hl], a
 	jr .copyTypes
+
+; trainer battle	
 ; if it's a trainer mon, copy the HP and status from the enemy party data
 .copyHPAndStatusFromPartyData
 	ld hl, wEnemyMon1HP
@@ -76,27 +79,39 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld [wEnemyMonHP], a
 	ld a, [hli]
 	ld [wEnemyMonHP + 1], a
+	
+; wEnemyMonPartyPos	
 	ld a, [wWhichPokemon]
 	ld [wEnemyMonPartyPos], a
+	
+; wEnemyMonStatus	
 	inc hl
 	ld a, [hl]
 	ld [wEnemyMonStatus], a
-	jr .copyTypes
+
+; wild and trainer battle	
 .copyTypes
 	ld hl, W_MONHTYPES
 	ld de, wEnemyMonType
-	ld a, [hli]            ; copy type 1
+	
+; copy type 1	
+	ld a, [hli]
 	ld [de], a
 	inc de
-	ld a, [hli]            ; copy type 2
+	
+; copy type 2	
+	ld a, [hli]
 	ld [de], a
 	inc de
-	ld a, [hli]            ; copy catch rate
-	ld [de], a
+	
+; skip wEnemyMonCatchRate_NotReferenced
 	inc de
+	
+; moves	
 	ld a, [W_ISINBATTLE]
-	cp $2 ; is it a trainer battle?
+	cp TRAINER_BATTLE
 	jr nz, .copyStandardMoves
+	
 ; if it's a trainer battle, copy moves from enemy party data
 	ld hl, wEnemyMon1Moves
 	ld a, [wWhichPokemon]
@@ -105,8 +120,9 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	ld bc, NUM_MOVES
 	call CopyData
 	jr .loadMovePPs
+
 .copyStandardMoves
-; for a wild mon, first copy default moves from the mon header
+; for a wild mon, first copy default moves from the mon header (base moves)
 	ld hl, W_MONHMOVES
 	ld a, [hli]
 	ld [de], a
@@ -122,51 +138,73 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	dec de
 	dec de
 	dec de
+	
 	xor a
 	ld [wHPBarMaxHP], a
-	predef WriteMonMoves ; get moves based on current level ; @@@ dont get the last four, get them at random
-	; and based on exp etc rather than level
+	
+	predef WriteMonMoves ; get moves based on current level ; @@@ dont get the last four, get them at random (based on exp etc)
+	; at engine/evos_moves.asm
+
+; PPs	
 .loadMovePPs
 	ld hl, wEnemyMonMoves
-	ld de, wEnemyMonSpecial + 1
+	ld de, wEnemyMonPP
 	predef LoadMovePPs
+	
+; Base stats	
 	ld hl, W_MONHBASESTATS
 	ld de, wEnemyMonBaseStats
-	ld b, $5 ; @@@ spdef
+	ld b, NUM_STATS
+
 .copyBaseStatsLoop
 	ld a, [hli]
 	ld [de], a
 	inc de
 	dec b
 	jr nz, .copyBaseStatsLoop
+	
+; copy catch rate (the good one)	
 	ld hl, W_MONHCATCHRATE
 	ld a, [hli]
 	ld [de], a
 	inc de
-	ld a, [hl] ; base exp
+
+; copy base exp
+	ld a, [hl]
 	ld [de], a
+
+; get mon name	
 	ld a, [wEnemyMonSpecies2]
 	ld [wd11e], a
 	call GetMonName
+
+; copy nick from wcd6d to wEnemyMonNick	
 	ld hl, wcd6d
 	ld de, wEnemyMonNick
 	ld bc, $b
 	call CopyData
+; get mon's pokedex number	
 	ld a, [wEnemyMonSpecies2]
 	ld [wd11e], a
 	predef IndexToPokedex
+
+; register mon as seen	
 	ld a, [wd11e]
 	dec a
 	ld c, a
 	ld b, $1
 	ld hl, wPokedexSeen
-	predef FlagActionPredef ; mark this mon as seen in the pokedex
+	predef FlagActionPredef
+
+; copy level and stats from wEnemyMon struct to Unmodified level and stats buffer	
 	ld hl, wEnemyMonLevel
 	ld de, wEnemyMonUnmodifiedLevel
-	ld bc, $b
+	ld bc, 1 + NUM_STATS * 2
 	call CopyData
+
+; init stat mods	
 	ld a, $7 ; default stat mod
-	ld b, $8 ; number of stat mods
+	ld b, $8 ; number of stat mods (not needed as many)
 	ld hl, wEnemyMonStatMods
 .statModLoop
 	ld [hli], a
@@ -198,7 +236,7 @@ EnemySendOut: ; 3c90e (f:490e)
 EnemySendOutFirstMon: ; 3c92a (f:492a)
 	xor a
 	
-; clear enemy statuses	
+; clear enemy battstatuses	
 	ld hl,wEnemyStatsToDouble
 	ld [hli],a
 	ld [hli],a
@@ -225,7 +263,12 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
-	ld [hl], a	
+	ld [hl], a
+	
+; clear enemy bide damage
+	ld hl, wEnemyBideAccumulatedDamage
+	ld [hli], a
+	ld [hl], a
 	
 	hlCoord 18, 0
 	ld a,8
@@ -410,6 +453,8 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 	ld [wPartyGainExpFlags],a
 	ld [wPartyFoughtCurrentEnemyFlags],a
 	call SaveScreenTilesToBuffer1
+	
+; @@@TODO	
 	jp SwitchPlayerMon
 
 

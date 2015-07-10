@@ -2075,10 +2075,10 @@ CopySlowbroSpriteData: ; 7973f (1e:573f)
 Func_79747: ; 79747 (1e:5747)
 	ld a, [H_WHOSETURN] ; $fff3
 	and a
-	ld hl, wccf7
+	ld hl, wPlayerHasUsedMinimize
 	ld a, [W_PLAYERBATTSTATUS2] ; W_PLAYERBATTSTATUS2
 	jr z, .asm_79758
-	ld hl, wccf3
+	ld hl, wEnemyHasUsedMinimize
 	ld a, [W_ENEMYBATTSTATUS2] ; W_ENEMYBATTSTATUS2
 .asm_79758
 	push hl

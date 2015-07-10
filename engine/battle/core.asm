@@ -850,7 +850,7 @@ FaintEnemyPokemon ; 0x3c567
 	ld [hl], a
 	ld [W_ENEMYDISABLEDMOVE], a
 	ld [wEnemyDisabledMoveNumber], a
-	ld [wccf3], a
+	ld [wEnemyHasUsedMinimize], a
 	ld hl, wPlayerUsedMove
 	ld [hli], a
 	ld [hl], a
@@ -1378,7 +1378,7 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 	ld [hl],a
 	ld [W_ENEMYDISABLEDMOVE],a
 	ld [wEnemyDisabledMoveNumber],a
-	ld [wccf3],a
+	ld [wEnemyHasUsedMinimize],a
 	ld hl,wPlayerUsedMove
 	ld [hli],a
 	ld [hl],a
@@ -1828,7 +1828,7 @@ SendOutMon: ; 3cc91 (f:4c91)
 	ld [hl], a
 	ld [W_PLAYERDISABLEDMOVE], a
 	ld [wPlayerDisabledMoveNumber], a
-	ld [wccf7], a
+	ld [wPlayerHasUsedMinimize], a
 	ld b, $1
 	call GoPAL_SET
 	ld hl, W_ENEMYBATTSTATUS1
@@ -2453,7 +2453,7 @@ PartyMenuOrRockOrRun:
 	ld hl, AnimationSubstitute
 	jr nz, .doEnemyMonAnimation
 ; enemy mon doesn't have substitute
-	ld a, [wccf3]
+	ld a, [wEnemyHasUsedMinimize]
 	and a ; has the enemy mon used Minimise?
 	ld hl, AnimationMinimizeMon
 	jr nz, .doEnemyMonAnimation
@@ -7679,13 +7679,13 @@ UpdateStatDone: ; 3f4ca (f:74ca)
 	call Func_3f688
 	ld hl, W_PLAYERBATTSTATUS2
 	ld de, W_PLAYERMOVENUM
-	ld bc, wccf7
+	ld bc, wPlayerHasUsedMinimize
 	ld a, [H_WHOSETURN]
 	and a
 	jr z, .asm_3f4e6
 	ld hl, W_ENEMYBATTSTATUS2
 	ld de, W_ENEMYMOVENUM
-	ld bc, wccf3
+	ld bc, wEnemyHasUsedMinimize
 .asm_3f4e6
 	ld a, [de]
 	cp MINIMIZE

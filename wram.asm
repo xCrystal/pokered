@@ -445,7 +445,7 @@ wccf0:: ds 1 ; used as a check if a mon fainted
 wPlayerUsedMove:: ds 1 ; ccf1
 wEnemyUsedMove:: ds 1 ; ccf2
 
-wccf3:: ds 1 ; used with the move minimize
+wEnemyHasUsedMinimize:: ds 1 ; used with the move minimize
 
 wMoveDidntMiss:: ds 1 ; ccf4
 
@@ -454,7 +454,7 @@ wPartyFoughtCurrentEnemyFlags:: ; ccf5
 	flag_array 6
 
 wccf6:: ds 1 ; used in some hp bar thing
-wccf7:: ds 14 ; used with substitute move sliding thing? (not sure)
+wPlayerHasUsedMinimize:: ds 14 ; used with substitute move sliding thing? (not sure)
 
 wUnknownSlotVar:: ; cd05
 

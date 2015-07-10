@@ -6,7 +6,7 @@ TRAINER_BATTLE EQU 2
 ; @@@ not modified anything yet
 LoadEnemyMonData: ; 3eb01 (f:6b01)
 ; this is executed on init wild battle,
-; and also when enemy trn sends a new mon?
+; and also when enemy trn sends a new mon
 	ld a, [wLinkState]
 	cp LINK_STATE_BATTLING ; battling on a link trn battle?
 	jp z, LoadEnemyMonFromParty ; load mon from other player party if in a link battle
@@ -173,6 +173,244 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	dec b
 	jr nz, .statModLoop
 	ret
+	
+	
+; send out a trainer's mon
+; set wPlayerMonNumber bit of wPartyGainExpFlags and reset the rest
+; set wPlayerMonNumber bit of wPartyFoughtCurrentEnemyFlags and reset the rest
+; @@@ not called yet
+EnemySendOut: ; 3c90e (f:490e)
+	ld hl,wPartyGainExpFlags
+	xor a
+	ld [hl],a
+	ld a,[wPlayerMonNumber]
+	ld c,a
+	ld b,1
+	push bc
+	predef FlagActionPredef ; set bit a of [hl]
+	ld hl,wPartyFoughtCurrentEnemyFlags
+	xor a
+	ld [hl],a
+	pop bc
+	predef FlagActionPredef
+
+; EnemySendOut without changing wPartyGainExpFlags or wPartyFoughtCurrentEnemyFlags
+EnemySendOutFirstMon: ; 3c92a (f:492a)
+	xor a
+	
+; clear enemy statuses	
+	ld hl,wEnemyStatsToDouble
+	ld [hli],a
+	ld [hli],a
+	ld [hli],a
+	ld [hli],a
+	ld [hl],a
+
+; clear enemy's disable	and minimize
+	ld [W_ENEMYDISABLEDMOVE],a
+	ld [wEnemyDisabledMoveNumber],a
+	ld [wEnemyHasUsedMinimize],a
+
+; clear p/e used move	
+	ld hl,wPlayerUsedMove
+	ld [hli],a
+	ld [hl],a
+	
+; player no longer using a trapping move	
+	ld hl,W_PLAYERBATTSTATUS1
+	res UsingTrappingMove,[hl]
+	
+; clear p/e damage addresses	
+	ld hl, W_PLAYERDAMAGE
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a	
+	
+	hlCoord 18, 0
+	ld a,8
+	call SlideTrainerPicOffScreen
+	call PrintEmptyString
+	call SaveScreenTilesToBuffer1
+	ld a,[wLinkState]
+	cp LINK_STATE_BATTLING
+	jr nz,.next
+
+; link battle only
+; read which Pokemon the opponent sent out
+	ld a,[wSerialExchangeNybbleReceiveData]
+	sub 4
+	ld [wWhichPokemon],a
+	jr .next3
+	
+; not link battle only	
+.next
+	ld b,$FF
+
+; find enemy mon in the next position
+; @@@ this means, AI automatically sends enemy mons in order
+; if it's first mon, wEnemyMonPartyPos is $FF
+.next2
+	inc b
+	ld a,[wEnemyMonPartyPos]
+	cp b
+	jr z,.next2
+
+; point hl to said next mon and save mon index (0-5) to wWhichPokemon
+	ld hl,wEnemyMon1
+	ld a,b
+	ld [wWhichPokemon],a
+	push bc
+	ld bc,wEnemyMon2 - wEnemyMon1
+	call AddNTimes
+	pop bc
+	
+; if it's fainted, skip this mon
+	inc hl
+	ld a,[hli]
+	ld c,a
+	ld a,[hl]
+	or c
+	jr z,.next2
+	
+; all trainer battles (link or not)
+; read data of the mon the enemy is going to send
+.next3
+	ld a,[wWhichPokemon]
+	ld hl,wEnemyMon1Level
+	ld bc,wEnemyMon2 - wEnemyMon1
+	call AddNTimes
+
+; level	from the EnemyMons struct
+	ld a,[hl]
+	ld [W_CURENEMYLVL],a
+
+; species from the wEnemyPartyMons (the six species bytes) struct
+	ld a,[wWhichPokemon]
+	inc a
+	ld hl,wEnemyPartyCount
+	ld c,a
+	ld b,0
+	add hl,bc
+	ld a,[hl]
+	ld [wEnemyMonSpecies2],a
+	ld [wcf91],a
+		
+	call LoadEnemyMonData
+
+; variables to print a different text based on enemy HP when player sends out mon
+; @@@ are these necessary here too?
+	ld hl,wEnemyMonHP
+	ld a,[hli]
+	ld [wcce3],a
+	ld a,[hl]
+	ld [wcce4],a
+	
+	ld a,1
+	ld [wCurrentMenuItem],a
+	
+	ld a,[wd11d]
+	dec a
+	jr z,.next4 ; jump if enemy mon not fainted
+	
+	ld a,[wPartyCount]
+	dec a
+	jr z,.next4 ; jump if enemy has no more mons left
+	
+	ld a,[wLinkState]
+	cp LINK_STATE_BATTLING
+	jr z,.next4 ; jump if link battle
+	
+	ld a,[W_OPTIONS]
+	bit 6,a
+	jr nz,.next4 ; jump if battle style is set
+
+; allow the player to switch mon as enemy sends out another mon
+; unless enemy is switching a non-fainted mon
+; unless enemy has no more mons left
+; unless it's link battle
+; unless battle style is set
+; @@@ make forced set style?
+	ld hl, TrainerAboutToUseText
+	call PrintText
+	hlCoord 0, 7
+	ld bc,$0801
+	ld a,TWO_OPTION_MENU
+	ld [wTextBoxID],a
+	call DisplayTextBoxID
+	
+	ld a,[wCurrentMenuItem]
+	and a
+	jr nz,.next4 ; jump because player chose "NO"
+	
+	ld a,2
+	ld [wd07d],a
+	call DisplayPartyMenu
+	
+.next9
+	ld a,1
+	ld [wCurrentMenuItem],a
+	jr c,.next7 ; no Pokemon chosen
+	
+	ld hl,wPlayerMonNumber
+	ld a,[wWhichPokemon]
+	cp [hl]
+	jr nz,.next6 ; this Pokemon is not already out
+	
+	ld hl,AlreadyOutText
+	call PrintText
+.next8
+	call GoBackToPartyMenu
+	jr .next9 ; go back to chosing another mon
+	
+.next6
+	call HasMonFainted
+	jr z,.next8 ; go back to chosing another mon
+
+; player has successfully chosen a mon to switch to	
+	xor a
+	ld [wCurrentMenuItem],a
+
+; get out of party menu	
+.next7 
+	call GBPalWhiteOut
+	call LoadHudTilePatterns
+	call LoadScreenTilesFromBuffer1
+
+; finally, enemy trainer sends out his mon
+.next4
+	call ClearSprites
+	ld hl,wTileMap
+	ld bc,$040B
+	call ClearScreenArea
+	ld b,1
+	call GoPAL_SET
+	call GBPalNormal
+	ld hl,TrainerSentOutText
+	call PrintText
+	ld a,[wEnemyMonSpecies2]
+	ld [wcf91],a
+	ld [wd0b5],a
+	call GetMonHeader
+	ld de,vFrontPic
+	call LoadMonFrontSprite
+	ld a,$CF
+	ld [$FFE1],a
+	hlCoord 15, 6
+	predef Func_3f073
+	ld a,[wEnemyMonSpecies2]
+	call PlayCry
+	call DrawEnemyHUDAndHPBar
+	ld a,[wCurrentMenuItem]
+	and a
+	ret nz
+
+; player also switched mon	
+	xor a
+	ld [wPartyGainExpFlags],a
+	ld [wPartyFoughtCurrentEnemyFlags],a
+	call SaveScreenTilesToBuffer1
+	jp SwitchPlayerMon
 
 
 ; check W_CUROPPONENT to determine if wild or trainer battle
@@ -276,7 +514,7 @@ InitBattle_Common:
 	ld a, [W_ISINBATTLE]
 	dec a ; is it a wild battle?
 	call z, DrawEnemyHUDAndHPBar ; draw enemy HUD and HP bar if it's a wild battle
-	; because it's the enemy is already a mon pic, not a trainer pic
+	; because the enemy is already a mon pic, not a trainer pic
 	
 	call StartBattle ; battle engine actual starting point (executes main loop)
 	
@@ -297,8 +535,32 @@ InitBattle_Common:
 	
 
 ; StartBattle:
+	ld a, [W_ISINBATTLE]
+	dec a
+	jr z, .goAhead
+
+; find enemy trainer's first alive mon	
 	ld hl, wEnemyMon1HP
 	ld bc, wEnemyMon2 - wEnemyMon1 - 1
-	ld d, $3
-.findFirstAliveEnemyMonLoop	
+	ld d, $4 - 1
+
+; @@@ shouldn't the first alive mon always be the first mon at this point?	
+.findFirstAliveEnemyMonLoop
+	inc d
+	ld a, [hli]
+	or [hl]
+	jr nz, .foundFirstAliveEnemyMon
+	add hl, bc
+	jr .findFirstAliveEnemyMonLoop
+
+.foundFirstAliveEnemyMon
+	ld a, d
+	ld [wSerialExchangeNybbleReceiveData], a ; 4-9 for mons 1-6
 	
+; enemy trainer sends out enemy mon	
+	call EnemySendOutFirstMon
+	
+.goAhead
+	ld c, 40
+	call DelayFrames
+	call SaveScreenTilesToBuffer1

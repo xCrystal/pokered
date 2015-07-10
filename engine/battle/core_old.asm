@@ -850,7 +850,7 @@ FaintEnemyPokemon ; 0x3c567
 	ld [hl], a
 	ld [W_ENEMYDISABLEDMOVE], a
 	ld [wEnemyDisabledMoveNumber], a
-	ld [wccf3], a
+	ld [wEnemyHasUsedMinimize], a
 	ld hl, wPlayerUsedMove
 	ld [hli], a
 	ld [hl], a
@@ -1351,176 +1351,6 @@ SlideTrainerPicOffScreen: ; 3c8df (f:48df)
 	jr nz, .slideStepLoop
 	ret
 
-; send out a trainer's mon
-EnemySendOut: ; 3c90e (f:490e)
-	ld hl,wPartyGainExpFlags
-	xor a
-	ld [hl],a
-	ld a,[wPlayerMonNumber]
-	ld c,a
-	ld b,1
-	push bc
-	predef FlagActionPredef
-	ld hl,wPartyFoughtCurrentEnemyFlags
-	xor a
-	ld [hl],a
-	pop bc
-	predef FlagActionPredef
-
-; don't change wPartyGainExpFlags or wPartyFoughtCurrentEnemyFlags
-EnemySendOutFirstMon: ; 3c92a (f:492a)
-	xor a
-	ld hl,wEnemyStatsToDouble ; clear enemy statuses
-	ld [hli],a
-	ld [hli],a
-	ld [hli],a
-	ld [hli],a
-	ld [hl],a
-	ld [W_ENEMYDISABLEDMOVE],a
-	ld [wEnemyDisabledMoveNumber],a
-	ld [wccf3],a
-	ld hl,wPlayerUsedMove
-	ld [hli],a
-	ld [hl],a
-	dec a
-	ld [wAICount],a
-	ld hl,W_PLAYERBATTSTATUS1
-	res 5,[hl]
-	hlCoord 18, 0
-	ld a,8
-	call SlideTrainerPicOffScreen
-	call PrintEmptyString
-	call SaveScreenTilesToBuffer1
-	ld a,[wLinkState]
-	cp LINK_STATE_BATTLING
-	jr nz,.next
-	ld a,[wSerialExchangeNybbleReceiveData]
-	sub 4
-	ld [wWhichPokemon],a
-	jr .next3
-.next
-	ld b,$FF
-.next2
-	inc b
-	ld a,[wEnemyMonPartyPos]
-	cp b
-	jr z,.next2
-	ld hl,wEnemyMon1
-	ld a,b
-	ld [wWhichPokemon],a
-	push bc
-	ld bc,wEnemyMon2 - wEnemyMon1
-	call AddNTimes
-	pop bc
-	inc hl
-	ld a,[hli]
-	ld c,a
-	ld a,[hl]
-	or c
-	jr z,.next2
-.next3
-	ld a,[wWhichPokemon]
-	ld hl,wEnemyMon1Level
-	ld bc,wEnemyMon2 - wEnemyMon1
-	call AddNTimes
-	ld a,[hl]
-	ld [W_CURENEMYLVL],a
-	ld a,[wWhichPokemon]
-	inc a
-	ld hl,wEnemyPartyCount
-	ld c,a
-	ld b,0
-	add hl,bc
-	ld a,[hl]
-	ld [wEnemyMonSpecies2],a
-	ld [wcf91],a
-	call LoadEnemyMonData
-	ld hl,wEnemyMonHP
-	ld a,[hli]
-	ld [wcce3],a
-	ld a,[hl]
-	ld [wcce4],a
-	ld a,1
-	ld [wCurrentMenuItem],a
-	ld a,[wd11d]
-	dec a
-	jr z,.next4
-	ld a,[wPartyCount]
-	dec a
-	jr z,.next4
-	ld a,[wLinkState]
-	cp LINK_STATE_BATTLING
-	jr z,.next4
-	ld a,[W_OPTIONS]
-	bit 6,a
-	jr nz,.next4
-	ld hl, TrainerAboutToUseText
-	call PrintText
-	hlCoord 0, 7
-	ld bc,$0801
-	ld a,TWO_OPTION_MENU
-	ld [wTextBoxID],a
-	call DisplayTextBoxID
-	ld a,[wCurrentMenuItem]
-	and a
-	jr nz,.next4
-	ld a,2
-	ld [wd07d],a
-	call DisplayPartyMenu
-.next9
-	ld a,1
-	ld [wCurrentMenuItem],a
-	jr c,.next7
-	ld hl,wPlayerMonNumber
-	ld a,[wWhichPokemon]
-	cp [hl]
-	jr nz,.next6
-	ld hl,AlreadyOutText
-	call PrintText
-.next8
-	call GoBackToPartyMenu
-	jr .next9
-.next6
-	call HasMonFainted
-	jr z,.next8
-	xor a
-	ld [wCurrentMenuItem],a
-.next7
-	call GBPalWhiteOut
-	call LoadHudTilePatterns
-	call LoadScreenTilesFromBuffer1
-.next4
-	call ClearSprites
-	ld hl,wTileMap
-	ld bc,$040B
-	call ClearScreenArea
-	ld b,1
-	call GoPAL_SET
-	call GBPalNormal
-	ld hl,TrainerSentOutText
-	call PrintText
-	ld a,[wEnemyMonSpecies2]
-	ld [wcf91],a
-	ld [wd0b5],a
-	call GetMonHeader
-	ld de,vFrontPic
-	call LoadMonFrontSprite
-	ld a,$CF
-	ld [$FFE1],a
-	hlCoord 15, 6
-	predef Func_3f073
-	ld a,[wEnemyMonSpecies2]
-	call PlayCry
-	call DrawEnemyHUDAndHPBar
-	ld a,[wCurrentMenuItem]
-	and a
-	ret nz
-	xor a
-	ld [wPartyGainExpFlags],a
-	ld [wPartyFoughtCurrentEnemyFlags],a
-	call SaveScreenTilesToBuffer1
-	jp SwitchPlayerMon
-
 TrainerAboutToUseText: ; 3ca79 (f:4a79)
 	TX_FAR _TrainerAboutToUseText
 	db "@"
@@ -1828,7 +1658,7 @@ SendOutMon: ; 3cc91 (f:4c91)
 	ld [hl], a
 	ld [W_PLAYERDISABLEDMOVE], a
 	ld [wPlayerDisabledMoveNumber], a
-	ld [wccf7], a
+	ld [wPlayerHasUsedMinimize], a
 	ld b, $1
 	call GoPAL_SET
 	ld hl, W_ENEMYBATTSTATUS1
@@ -2453,7 +2283,7 @@ PartyMenuOrRockOrRun:
 	ld hl, AnimationSubstitute
 	jr nz, .doEnemyMonAnimation
 ; enemy mon doesn't have substitute
-	ld a, [wccf3]
+	ld a, [wEnemyHasUsedMinimize]
 	and a ; has the enemy mon used Minimise?
 	ld hl, AnimationMinimizeMon
 	jr nz, .doEnemyMonAnimation
@@ -7343,13 +7173,13 @@ UpdateStatDone: ; 3f4ca (f:74ca)
 	call Func_3f688
 	ld hl, W_PLAYERBATTSTATUS2
 	ld de, W_PLAYERMOVENUM
-	ld bc, wccf7
+	ld bc, wPlayerHasUsedMinimize
 	ld a, [H_WHOSETURN]
 	and a
 	jr z, .asm_3f4e6
 	ld hl, W_ENEMYBATTSTATUS2
 	ld de, W_ENEMYMOVENUM
-	ld bc, wccf3
+	ld bc, wEnemyHasUsedMinimize
 .asm_3f4e6
 	ld a, [de]
 	cp MINIMIZE

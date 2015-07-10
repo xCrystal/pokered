@@ -1,8 +1,49 @@
-WILD_BATTLE EQU 1
-TRAINER_BATTLE EQU 2
-NUM_STATS EQU 5
-
 ;;;BattleCore:
+
+SendOutMon: ; 3cc91 (f:4c91)
+	callab PrintSendOutMonMessage
+	ld hl, wEnemyMonHP
+	ld a, [hli]
+	or [hl] ; is enemy mon HP zero?
+	jp z, .skipDrawingEnemyHUDAndHPBar; if HP is zero, skip drawing the HUD and HP bar
+	call DrawEnemyHUDAndHPBar
+.skipDrawingEnemyHUDAndHPBar
+	call DrawPlayerHUDAndHPBar
+	predef LoadMonBackPic
+	xor a
+	ld [$ffe1], a
+	ld hl, wcc2d
+	ld [hli], a
+	ld [hl], a
+	ld [wBoostExpByExpAll], a
+	ld [wDamageMultipliers], a
+	ld [W_PLAYERMOVENUM], a
+	ld hl, wPlayerUsedMove
+	ld [hli], a
+	ld [hl], a
+	ld hl, wPlayerStatsToDouble
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ld [W_PLAYERDISABLEDMOVE], a
+	ld [wPlayerDisabledMoveNumber], a
+	ld [wPlayerHasUsedMinimize], a
+	ld b, $1
+	call GoPAL_SET
+	ld hl, W_ENEMYBATTSTATUS1
+	res UsingTrappingMove, [hl]
+	ld a, $1
+	ld [H_WHOSETURN], a
+	ld a, POOF_ANIM
+	call PlayMoveAnimation
+	hlCoord 4, 11
+	predef Func_3f073
+	ld a, [wcf91]
+	call PlayCry
+	call PrintEmptyString
+	jp SaveScreenTilesToBuffer1
 
 LoadEnemyMonData: ; 3eb01 (f:6b01)
 ; load enemy mon data of wEnemyMonSpecies2 into the wEnemyMon struct
@@ -454,7 +495,7 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 	ld [wPartyFoughtCurrentEnemyFlags],a
 	call SaveScreenTilesToBuffer1
 	
-; @@@TODO	
+; updates wPlayerMonNumber and marks new mon as fought current mon and as to receive exp
 	jp SwitchPlayerMon
 
 
@@ -579,7 +620,7 @@ InitBattle_Common:
 	db "@"
 	
 
-; StartBattle:
+StartBattle:
 	ld a, [W_ISINBATTLE]
 	dec a
 	jr z, .goAhead
@@ -609,3 +650,109 @@ InitBattle_Common:
 	ld c, 40
 	call DelayFrames
 	call SaveScreenTilesToBuffer1
+	
+.checkAnyPartyAlive
+	call AnyPartyAlive
+	ld a, d
+	and a
+	jp z, HandlePlayerBlackOut ; jump if no mon is alive
+
+	call LoadScreenTilesFromBuffer1
+	ld a, [W_BATTLETYPE]
+	and a ; is it a normal battle?
+	jp z, .playerSendOutFirstMon ; if so, send out player mon	
+	
+; safari zone battle
+.displaySafariZoneBattleMenu
+	call DisplayBattleMenu
+	ret c ; return if the player ran from battle
+	ld a, [wcd6a]
+	and a ; was the item used successfully?
+	jr z, .displaySafariZoneBattleMenu ; if not, display the menu again; XXX does this ever jump?
+	ld a, [W_NUMSAFARIBALLS]
+	and a
+	jr nz, .notOutOfSafariBalls
+	call LoadScreenTilesFromBuffer1
+	ld hl, .outOfSafariBallsText
+	jp PrintText
+.notOutOfSafariBalls
+	callab PrintSafariZoneBattleText
+	ld a, [wEnemyMonSpeed + 1]
+	add a
+	ld b, a ; init b (which is later compared with random value) to (enemy speed % 256) * 2
+	jp c, EnemyRan ; if (enemy speed % 256) > 127, the enemy runs
+	ld a, [wSafariBaitFactor]
+	and a ; is bait factor 0?
+	jr z, .checkEscapeFactor
+; bait factor is not 0
+; divide b by 4 (making the mon less likely to run)
+	srl b
+	srl b
+.checkEscapeFactor
+	ld a, [wSafariEscapeFactor]
+	and a ; is escape factor 0?
+	jr z, .compareWithRandomValue
+; escape factor is not 0
+; multiply b by 2 (making the mon more likely to run)
+	sla b
+	jr nc, .compareWithRandomValue
+; cap b at 255
+	ld b, $ff
+.compareWithRandomValue
+	call Random
+	cp b
+	jr nc, .checkAnyPartyAlive
+	jp EnemyRan ; if b was greater than the random value, the enemy runs
+
+.outOfSafariBallsText
+	TX_FAR _OutOfSafariBallsText
+	db "@"
+
+; player sends his first alive mon
+.playerSendOutFirstMon
+	xor a
+	ld [wWhichPokemon], a
+
+.findFirstAliveMonLoop
+	call HasMonFainted
+	jr nz, .foundFirstAliveMon
+	
+; this mon is fainted, go to the next one
+	ld hl, wWhichPokemon
+	inc [hl]
+	jr .findFirstAliveMonLoop
+	
+.foundFirstAliveMon
+	ld a, [wWhichPokemon]
+	ld [wPlayerMonNumber], a
+
+; save species into wcf91 and wBattleMonSpecies2	
+	ld hl, wPartySpecies
+	ld c, a
+	ld b, 0
+	add hl, bc
+	ld a, [hl]
+	ld [wcf91], a
+	ld [wBattleMonSpecies2], a
+	
+	call LoadScreenTilesFromBuffer1
+	hlCoord 1, 5
+	ld a, $9
+	call SlideTrainerPicOffScreen
+	call SaveScreenTilesToBuffer1
+
+; set player mon exp flags for this enemy mon
+	ld a, [wWhichPokemon]
+	ld c, a
+	ld b, $1
+	push bc
+	ld hl, wPartyGainExpFlags
+	predef FlagActionPredef
+	ld hl, wPartyFoughtCurrentEnemyFlags
+	pop bc
+	predef FlagActionPredef
+	
+	call LoadBattleMonFromParty
+	call LoadScreenTilesFromBuffer1
+	call SendOutMon
+	jp MainInBattleLoop	

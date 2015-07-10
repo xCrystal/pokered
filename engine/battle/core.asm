@@ -560,7 +560,7 @@ MainInBattleLoop: ; 3c233 (f:4233)
 	call HandlePoisonBurnLeechSeed
 	jp z, HandleEnemyMonFainted
 	call DrawHUDsAndHPBars
-	call CheckNumAttacksLeft
+	call CheckNumAttacksLeft ; if no more attacks left, reset trapping status
 	jp MainInBattleLoop
 
 HandlePoisonBurnLeechSeed: ; 3c3bd (f:43bd)

@@ -1,4 +1,74 @@
-;;;BattleCore:
+; return selected move at wEnemySelectedMove
+SelectEnemyMove: ; 3d564 (f:5564)
+	ld a, [wLinkState]
+	sub $4
+	jr nz, .noLinkBattle
+	
+; link battle
+	call SaveScreenTilesToBuffer1
+	call LinkBattleExchangeData
+	call LoadScreenTilesFromBuffer1
+	ld a, [wSerialExchangeNybbleReceiveData]
+	cp $e
+	jp z, .useStruggle
+	cp $d
+	jr z, .unableToSelectMove
+	cp $4
+	ret nc
+
+; find out which move the other player selected
+	ld [wEnemyMoveListIndex], a
+	ld c, a
+	ld hl, wEnemyMonMoves
+	ld b, $0
+	add hl, bc
+	ld a, [hl]
+	jr .done
+	
+.noLinkBattle
+	ld a, [W_ISINBATTLE]
+	dec a
+	jr z, .chooseRandomMove ; wild battle
+	callab AIEnemyTrainerChooseMoves ; trainer battle @@@ this needs lots of work!
+	
+.chooseRandomMove
+	ld hl, wEnemyMonMoves
+	call BattleRandom
+	ld b, $0
+	cp $40 ; select move 1 in [0,3f] (64/256 chance)
+	jr c, .moveChosen
+	inc hl
+	inc b
+	cp $80 ; select move 2 in [40,7f] (64/256 chance)
+	jr c, .moveChosen
+	inc hl
+	inc b
+	cp $c0 ; select move 3 in [80,bf] (64/256 chance)
+	jr c, .moveChosen
+	inc hl
+	inc b ; select move 4 in [c0,ff] (64/256 chance)
+	
+.moveChosen
+	ld a, b
+	ld [wEnemyMoveListIndex], a
+
+	ld a, [hl]
+	and a
+	jr z, .chooseRandomMove ; move non-existant, try again
+
+; save selected move at wEnemySelectedMove
+.done
+	ld [wEnemySelectedMove], a
+	ret
+	
+.unableToSelectMove
+	ld a, $ff
+	jr .done
+	
+.useStruggle
+	ld a, STRUGGLE
+	jr .done
+
 
 SendOutMon: ; 3cc91 (f:4c91)
 	callab PrintSendOutMonMessage
@@ -783,4 +853,149 @@ StartBattle:
 	call SendOutMon
 	jp MainInBattleLoop
 	
-; MainInBattleLoop:	
+MainInBattleLoop:
+
+; update mon's hp and status in party struct
+	call ReadPlayerMonCurHPAndStatus
+	
+	ld hl, wBattleMonHP
+	ld a, [hli]
+	or [hl] ; is battle mon HP 0?
+	jp z, HandlePlayerMonFainted  ; if battle mon HP is 0, jump
+	
+	ld hl, wEnemyMonHP
+	ld a, [hli]
+	or [hl] ; is enemy mon HP 0?
+	jp z, HandleEnemyMonFainted ; if enemy mon HP is 0, jump
+	
+	call SaveScreenTilesToBuffer1
+	xor a
+	ld [wd11d], a
+
+; display battle menu to select player move	
+	call DisplayBattleMenu
+	ret c ; return if player ran from battle
+	
+; if player wasted his turn switching/sending mon this turn, or attempting to run away, 
+; player can't select or execute move
+.selectPlayerMove
+	ld a, [wcd6a]
+	and a
+	ld a, $ff
+	ld [wPlayerSelectedMove], a
+	jr nz, .selectEnemyMove
+	
+	inc a ; 0
+	ld [wMoveMenuType], a
+	ld [wMenuItemToSwap], a	
+	inc a ; 1
+	ld [W_ANIMATIONID], a
+	
+	call MoveSelectionMenu
+	push af
+	call LoadScreenTilesFromBuffer1
+	call DrawHUDsAndHPBars
+	pop af
+	jr nz, MainInBattleLoop ; if the player didn't select a move, jump back
+	
+.selectEnemyMove
+; return selected move at wEnemySelectedMove
+; random for wild battles
+; chosen by AI in trainer battles
+	call SelectEnemyMove  
+	
+	ld a, [wLinkState]
+	cp LINK_STATE_BATTLING
+	jr nz, .compareSpeed
+	
+; link battle
+	ld a, [wSerialExchangeNybbleReceiveData]
+	cp $f
+	jp z, EnemyRan
+	cp $e
+	jr z, .compareSpeed
+	cp $d
+	jr z, .compareSpeed
+	sub $4
+	jr c, .compareSpeed
+
+; if we make it here, enemy link trainer switched mons
+	callab SwitchEnemyMon ; trainer_ai.asm, calls EnemySendOut
+	
+.compareSpeed
+	ld de, wBattleMonSpeed 
+	ld hl, wEnemyMonSpeed
+	ld c, $2
+	call StringCmp
+	jr z, .speedEqual
+	jr nc, .playerMovesFirst
+	jr .enemyMovesFirst
+	
+.speedEqual ; 50/50 chance for both players
+; @@@ is invertOutcome needed for link battles?
+	ld a, [$ffaa]
+	cp $2
+	jr z, .invertOutcome
+	call BattleRandom
+	cp $80
+	jr c, .playerMovesFirst
+	jr .enemyMovesFirst
+.invertOutcome
+	call BattleRandom
+	cp $80
+	jr c, .enemyMovesFirst
+	jr .playerMovesFirst
+	
+.enemyMovesFirst
+; set opponent turn
+	ld a, $1
+	ld [H_WHOSETURN], a
+; execute enemy's selected move
+; returns b=0 if player mon fainted, b=1 otherwise
+	call ExecuteEnemyMove ; @@@TODO
+	ld a, b
+	and a
+	jp z, HandlePlayerMonFainted
+	call DrawHUDsAndHPBars
+
+; set player turn
+	xor a
+	ld [H_WHOSETURN], a
+; execute player's selected move
+; returns b=0 if enemy mon fainted, b=1 otherwise	
+	call ExecutePlayerMove	; @@@TODO
+	ld a, b
+	and a
+	jp z, HandleEnemyMonFainted
+	call DrawHUDsAndHPBars
+	
+	jp MainInBattleLoop
+	
+.playerMovesFirst
+; set player turn
+	xor a
+	ld [H_WHOSETURN], a
+; execute player's selected move
+; returns b=0 if enemy mon fainted, b=1 otherwise		
+	call ExecutePlayerMove
+	ld a, b
+	and a
+	jp z, HandleEnemyMonFainted
+	call DrawHUDsAndHPBars
+	
+; set opponent turn
+	ld a, $1
+	ld [H_WHOSETURN], a
+; execute enemy's selected move
+; returns b=0 if player mon fainted, b=1 otherwise	
+	call ExecuteEnemyMove
+	ld a, b
+	and a
+	jp z, HandlePlayerMonFainted
+	call DrawHUDsAndHPBars
+
+	jp MainInBattleLoop	
+	
+
+	
+	

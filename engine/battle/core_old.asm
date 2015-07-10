@@ -733,6 +733,14 @@ FaintEnemyPokemon ; 0x3c567
 	ld hl, wPlayerUsedMove
 	ld [hli], a
 	ld [hl], a
+	ld hl, W_PLAYERDAMAGE
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ld hl, wEnemyBideAccumulatedDamage
+	ld [hli], a
+	ld [hl], a	
 	hlCoord 12, 5
 	deCoord 12, 6
 	call SlideDownFaintedMonPic
@@ -979,11 +987,15 @@ RemoveFaintedPlayerMon: ; 3c741 (f:4741)
 	ld [wLowHealthAlarm], a ;disable low health alarm
 	call WaitForSoundToFinish
 .skipWaitForSound
-; bug? if the player mon faints while the enemy mon is using bide,
-; the accumulated damage is overwritten. xxx what values can [wLowHealthAlarm] have here?
-	ld hl, wEnemyBideAccumulatedDamage
+	xor a
+	ld hl, wPlayerBideAccumulatedDamage
 	ld [hli], a
 	ld [hl], a
+	ld hl, W_PLAYERDAMAGE
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a	
 	ld [wBattleMonStatus], a
 	call ReadPlayerMonCurHPAndStatus
 	hlCoord 9, 7

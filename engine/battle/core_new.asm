@@ -40,10 +40,7 @@ SendOutMon: ; 3cc91 (f:4c91)
 	ld [W_PLAYERDISABLEDMOVE], a
 	ld [wPlayerDisabledMoveNumber], a
 	ld [wPlayerHasUsedMinimize], a
-	
-	ld b, $1
-	call GoPAL_SET
-	
+		
 ; enemy's trapping move battstatus	
 	ld hl, W_ENEMYBATTSTATUS1
 	res UsingTrappingMove, [hl]
@@ -53,13 +50,15 @@ SendOutMon: ; 3cc91 (f:4c91)
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
-	ld [hli], a
 	ld [hl], a
 	
 ; player bide accum. damage
 	ld hl, wPlayerBideAccumulatedDamage
 	ld [hli], a
-	ld [hl], a	
+	ld [hl], a
+	
+	ld b, $1
+	call GoPAL_SET	
 
 	ld a, $1
 	ld [H_WHOSETURN], a

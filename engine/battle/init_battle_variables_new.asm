@@ -77,9 +77,8 @@ InitBattleVariables: ; 525af (14:65af)
 	ld [hli], a
 	ld [hl], a
 
-; init wccd9 and wd11d (enemy mon fainted or not) to 1
+; init wd11d (enemy mon fainted or not) to 1
 	inc a
-	ld [wccd9], a
 	ld [wd11d], a
 
 ; test if safari battle	based on player location

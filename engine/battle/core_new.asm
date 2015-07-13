@@ -851,22 +851,23 @@ StartBattle:
 	call LoadBattleMonFromParty
 	call LoadScreenTilesFromBuffer1
 	call SendOutMon
-	jp MainInBattleLoop
+;	jr MainInBattleLoop
 	
 MainInBattleLoop:
-
 ; update mon's hp and status in party struct
 	call ReadPlayerMonCurHPAndStatus
-	
+
+; did player mon faint?	
 	ld hl, wBattleMonHP
 	ld a, [hli]
-	or [hl] ; is battle mon HP 0?
-	jp z, HandlePlayerMonFainted  ; if battle mon HP is 0, jump
-	
+	or [hl]
+	jp z, HandlePlayerMonFainted
+
+; did enemy mon faint?	
 	ld hl, wEnemyMonHP
 	ld a, [hli]
-	or [hl] ; is enemy mon HP 0?
-	jp z, HandleEnemyMonFainted ; if enemy mon HP is 0, jump
+	or [hl]
+	jp z, HandleEnemyMonFainted
 	
 	call SaveScreenTilesToBuffer1
 	xor a
@@ -880,12 +881,12 @@ MainInBattleLoop:
 	
 .displayBattleMenu
 ; display battle menu to select player move	
-	call DisplayBattleMenu
-	ret c ; return if player ran from battle
+	call DisplayBattleMenu ; returns (FIGHT), displays party menu (POKEMON), or bag menu (ITEM)
+	ret c ; return if player ran from battle (RUN)
 	
+.selectPlayerMove
 ; if player wasted his turn switching/sending mon this turn, or attempting to run away, 
 ; player can't select or execute move
-.selectPlayerMove
 	ld a, [wcd6a]
 	and a
 	ld a, $ff
@@ -983,7 +984,7 @@ MainInBattleLoop:
 	xor a
 	ld [H_WHOSETURN], a
 ; execute player's selected move
-; returns b=0 if enemy mon fainted, b=1 otherwise		
+; returns b=0 if enemy mon fainted, b=1 otherwise
 	call ExecutePlayerMove
 	ld a, b
 	and a
@@ -994,7 +995,7 @@ MainInBattleLoop:
 	ld a, $1
 	ld [H_WHOSETURN], a
 ; execute enemy's selected move
-; returns b=0 if player mon fainted, b=1 otherwise	
+; returns b=0 if player mon fainted, b=1 otherwise
 	call ExecuteEnemyMove
 	ld a, b
 	and a
@@ -1004,5 +1005,80 @@ MainInBattleLoop:
 	jp MainInBattleLoop
 	
 ;;; ExecutePlayerMove:
+	ld a, [wPlayerSelectedMove]
+	inc a
+	jp z, ExecutePlayerMoveDone
+
+; init move feedback addresses and critical hit flag
+	xor a
+	ld [W_MOVEMISSED], a
+	ld [wMoveDidntMiss], a
+	ld [wCriticalHitOrOHKO], a
+
+; init damage multipliers to neutral	
+	ld a, $a
+	ld [wDamageMultipliers], a
+
+; check player status conditions	
+;	call CheckPlayerStatusConditions
+
+; get selected move name and load its data to wram
+	call GetCurrentMove
+	call PrintMonName1Text
+
+; decrement selected move PP	
+	ld hl,DecrementPP
+	ld de,wPlayerSelectedMove ; pointer to the move just used
+	ld b,BANK(DecrementPP)
+	call Bankswitch
+	
+; accuracy test
+;	call MoveHitTest	
+	
+; damage calculation
+;	call CriticalHitTest
+;	call GetDamageVarsForPlayerAttack
+;	call CalculateDamage
+;	call AdjustDamageForMoveType
+;	call RandomizeDamage
+
+; play animation unless the move missed
+	ld a,[W_MOVEMISSED]
+	and a
+	jr z, .printMoveFailureText
+	
+	ld a, 4 ; animation BlinkEnemyMonSprite
+	ld [wAnimationType],a
+	ld a,[W_PLAYERMOVENUM]
+	call PlayMoveAnimation
+	call DrawPlayerHUDAndHPBar
+	jr moveDidNotMiss
+
+; print that the move missed if it did
+.printMoveFailureText
+	call PrintMoveFailureText
+	jr ExecutePlayerMoveDone
+	
+; apply damage if the move didn't miss
+.moveDidNotMiss
+;	call ApplyAttackToEnemyPokemon
+;	call PrintCriticalOHKOText
+;	callab DisplayEffectiveness
+	ld a,1
+	ld [wMoveDidntMiss],a
+
+; did the enemy faint? return b=0 if so	
+	ld a,[hli]
+	ld b,[hl]
+	or b
+	ret z	
+
+ExecutePlayerMoveDone:
+; return 0 at wcd6a and b=1 if enemy didn't faint
+	xor a
+	ld [wcd6a],a
+	ld b,1
+	ret	
+	
 
 ;;; ExecuteEnemyMove:

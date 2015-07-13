@@ -5557,10 +5557,6 @@ GetCurrentMove: ; 3eabe (f:6abe)
 	jr .selected
 .player
 	ld de, W_PLAYERMOVENUM
-	ld a, [W_FLAGS_D733]
-	bit 0, a
-	ld a, [wccd9]
-	jr nz, .selected
 	ld a, [wPlayerSelectedMove]
 .selected
 	ld [wd0b5], a

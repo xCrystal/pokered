@@ -1,7 +1,7 @@
 ; return selected move at wEnemySelectedMove
 SelectEnemyMove: ; 3d564 (f:5564)
 	ld a, [wLinkState]
-	sub $4
+	sub $4 ; LINK_STATE_BATTLING
 	jr nz, .noLinkBattle
 	
 ; link battle
@@ -872,6 +872,13 @@ MainInBattleLoop:
 	xor a
 	ld [wd11d], a
 
+	ld a, [wLinkState]
+	sub $4 ; LINK_STATE_BATTLING
+	jr z, .displayBattleMenu
+	
+	call SelectEnemyMove ; Not Link Battle Only
+	
+.displayBattleMenu
 ; display battle menu to select player move	
 	call DisplayBattleMenu
 	ret c ; return if player ran from battle
@@ -902,13 +909,13 @@ MainInBattleLoop:
 ; return selected move at wEnemySelectedMove
 ; random for wild battles
 ; chosen by AI in trainer battles
-	call SelectEnemyMove  
-	
 	ld a, [wLinkState]
 	cp LINK_STATE_BATTLING
 	jr nz, .compareSpeed
+
+; link battle	
+	call SelectEnemyMove ; Link Battle Only
 	
-; link battle
 	ld a, [wSerialExchangeNybbleReceiveData]
 	cp $f
 	jp z, EnemyRan
@@ -994,8 +1001,8 @@ MainInBattleLoop:
 	jp z, HandlePlayerMonFainted
 	call DrawHUDsAndHPBars
 
-	jp MainInBattleLoop	
+	jp MainInBattleLoop
 	
+;;; ExecutePlayerMove:
 
-	
-	
+;;; ExecuteEnemyMove:

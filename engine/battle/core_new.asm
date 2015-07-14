@@ -1168,7 +1168,7 @@ ExecuteEnemyMove:
 	
 ; damage calculation
 	call CriticalHitTest
-	call GetDamageVarsForPlayerAttack
+	call GetDamageVarsForEnemyAttack
 	call CalculateDamage
 	call AdjustDamageForMoveType
 	call RandomizeDamage

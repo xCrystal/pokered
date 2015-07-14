@@ -133,9 +133,6 @@ ItemUseBall: ; d687 (3:5687)
 	call LoadScreenTilesFromBuffer1	;restore screenBuffer from Backup
 	ld hl,ItemUseText00
 	call PrintText
-	callab IsGhostBattle
-	ld b,$10
-	jp z,.next12
 	ld a,[W_BATTLETYPE]
 	dec a
 	jr nz,.notOldManBattle
@@ -146,13 +143,6 @@ ItemUseBall: ; d687 (3:5687)
 	call CopyData ; save the player's name in the Wild Monster data (part of the Cinnabar Island Missingno glitch)
 	jp .BallSuccess	;$578b
 .notOldManBattle	;$56e9
-	ld a,[W_CURMAP]
-	cp a,POKEMONTOWER_6
-	jr nz,.loop
-	ld a,[wEnemyMonSpecies2]
-	cp a,MAROWAK
-	ld b,$10
-	jp z,.next12
 ; if not fighting ghost Marowak, loop until a random number in the current
 ; pokeball's allowed range is found
 .loop	;$56fa

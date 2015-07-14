@@ -1,7 +1,66 @@
+; some tests that need to pass for a move to hit
+MoveHitTest: ; 3e56b (f:656b)
+; scale the move accuracy according to attacker's accuracy and target's evasion
+	call CalcHitChance
+	ld a,[W_PLAYERMOVEACCURACY]
+	ld b,a
+	ld a,[H_WHOSETURN]
+	and a
+	jr z,.doAccuracyCheck
+	ld a,[W_ENEMYMOVEACCURACY]
+	ld b,a
+	
+.doAccuracyCheck
+; if the random number generated is 255, the move hits.
+; else, if the random number generated is greater than 
+; or equal to the scaled accuracy, the move misses
+	call BattleRandom
+	cp $ff
+	jr z, .moveDidntMiss
+	cp b
+	jr nc,.moveMissed
+
+.moveDidntMiss	
+; reset W_MOVEMISSED flag	
+	xor a
+	ld [W_MOVEMISSED],a
+	ret
+	
+.moveMissed
+ ; zero the damage
+	ld hl,W_PLAYERDAMAGE 
+	ld a,[H_WHOSETURN]
+	and a
+	jr z, .zeroDamage
+	ld hl,W_ENEMYDAMAGE
+.zeroDamage	
+	xor a
+	ld [hli],a
+	ld [hl],a
+
+; set W_MOVEMISSED flag	
+	inc a
+	ld [W_MOVEMISSED],a
+	ret
+
+
+; called in the start of execute p/e move
+InitTurnVariables:
+; init move feedback addresses and critical hit flag
+	xor a
+	ld [W_MOVEMISSED], a
+	ld [wMoveDidntMiss], a
+	ld [wCriticalHitOrOHKO], a
+
+; init damage multipliers to neutral	
+	ld a, $a
+	ld [wDamageMultipliers], a
+
+	
 ; return selected move at wEnemySelectedMove
 SelectEnemyMove: ; 3d564 (f:5564)
 	ld a, [wLinkState]
-	sub $4 ; LINK_STATE_BATTLING
+	sub LINK_STATE_BATTLING
 	jr nz, .noLinkBattle
 	
 ; link battle
@@ -874,7 +933,7 @@ MainInBattleLoop:
 	ld [wd11d], a
 
 	ld a, [wLinkState]
-	sub $4 ; LINK_STATE_BATTLING
+	sub LINK_STATE_BATTLING
 	jr z, .displayBattleMenu
 	
 	call SelectEnemyMove ; Not Link Battle Only
@@ -1004,23 +1063,16 @@ MainInBattleLoop:
 
 	jp MainInBattleLoop
 	
-;;; ExecutePlayerMove:
+ExecutePlayerMove:
 	ld a, [wPlayerSelectedMove]
 	inc a
 	jp z, ExecutePlayerMoveDone
 
-; init move feedback addresses and critical hit flag
-	xor a
-	ld [W_MOVEMISSED], a
-	ld [wMoveDidntMiss], a
-	ld [wCriticalHitOrOHKO], a
+; init move feedback addresses, critical hit flag and damage multipliers	
+	call InitTurnVariables
 
-; init damage multipliers to neutral	
-	ld a, $a
-	ld [wDamageMultipliers], a
-
-; check player status conditions	
-;	call CheckPlayerStatusConditions
+; check player status conditions
+	call CheckPlayerStatusConditions
 
 ; get selected move name and load its data to wram
 	call GetCurrentMove
@@ -1033,26 +1085,26 @@ MainInBattleLoop:
 	call Bankswitch
 	
 ; accuracy test
-;	call MoveHitTest	
+	call MoveHitTest	
 	
 ; damage calculation
-;	call CriticalHitTest
-;	call GetDamageVarsForPlayerAttack
-;	call CalculateDamage
-;	call AdjustDamageForMoveType
-;	call RandomizeDamage
+	call CriticalHitTest
+	call GetDamageVarsForPlayerAttack
+	call CalculateDamage
+	call AdjustDamageForMoveType
+	call RandomizeDamage
 
 ; play animation unless the move missed
 	ld a,[W_MOVEMISSED]
 	and a
-	jr z, .printMoveFailureText
+	jr nz, .printMoveFailureText
 	
 	ld a, 4 ; animation BlinkEnemyMonSprite
 	ld [wAnimationType],a
 	ld a,[W_PLAYERMOVENUM]
 	call PlayMoveAnimation
 	call DrawPlayerHUDAndHPBar
-	jr moveDidNotMiss
+	jr .moveDidNotMiss
 
 ; print that the move missed if it did
 .printMoveFailureText
@@ -1061,13 +1113,14 @@ MainInBattleLoop:
 	
 ; apply damage if the move didn't miss
 .moveDidNotMiss
-;	call ApplyAttackToEnemyPokemon
-;	call PrintCriticalOHKOText
-;	callab DisplayEffectiveness
+	call ApplyAttackToEnemyPokemon
+	call PrintCriticalOHKOText
+	callab DisplayEffectiveness
 	ld a,1
 	ld [wMoveDidntMiss],a
 
-; did the enemy faint? return b=0 if so	
+; did the enemy faint? return b=0 if so
+	ld hl,wEnemyMonHP	
 	ld a,[hli]
 	ld b,[hl]
 	or b
@@ -1081,4 +1134,86 @@ ExecutePlayerMoveDone:
 	ret	
 	
 
-;;; ExecuteEnemyMove:
+ExecuteEnemyMove:
+	ld a, [wEnemySelectedMove]
+	inc a
+	jp z, ExecuteEnemyMoveDone
+
+; link battle stuff	
+	ld a, [wLinkState]
+	cp LINK_STATE_BATTLING
+	jr nz, .executeEnemyMove
+	ld b, $1
+	ld a, [wSerialExchangeNybbleReceiveData]
+	cp $e
+	jr z, .executeEnemyMove
+	cp $4
+	ret nc
+
+.executeEnemyMove	
+; init move feedback addresses, critical hit flag and damage multipliers	
+	call InitTurnVariables
+
+; check enemy status conditions
+	call CheckEnemyStatusConditions
+
+; get selected move name and load its data to wram
+	call GetCurrentMove
+	call PrintMonName1Text
+	
+; decrement selected move PP @@@
+	
+; accuracy test
+	call MoveHitTest	
+	
+; damage calculation
+	call CriticalHitTest
+	call GetDamageVarsForPlayerAttack
+	call CalculateDamage
+	call AdjustDamageForMoveType
+	call RandomizeDamage
+
+; play animation unless the move missed
+	ld a,[W_MOVEMISSED]
+	and a
+	jr nz, .printMoveFailureText
+	
+	ld a, 1 ; animation ShakeScreenVertically
+	ld [wAnimationType],a
+	ld a, [W_ENEMYMOVENUM]
+	call PlayMoveAnimation
+	call DrawEnemyHUDAndHPBar
+	jr .moveDidNotMiss
+
+; print that the move missed if it did
+.printMoveFailureText
+	call PrintMoveFailureText
+	jr ExecuteEnemyMoveDone
+	
+; apply damage if the move didn't miss
+.moveDidNotMiss
+	call ApplyAttackToPlayerPokemon
+	call PrintCriticalOHKOText
+	callab DisplayEffectiveness
+	ld a,1
+	ld [wMoveDidntMiss],a
+
+; did the player faint? return b=0 if so		
+	ld hl, wBattleMonHP
+	ld a, [hli]
+	ld b, [hl]
+	or b
+	ret z	
+
+; return b=1 if player didn't faint	
+ExecuteEnemyMoveDone:
+	ld b, $1
+	ret
+
+	
+CheckPlayerStatusConditions:
+	ret
+	
+	
+CheckEnemyStatusConditions:
+	ret	

@@ -64,6 +64,7 @@ OtherModifiers:
 .doubleDamage
 	ld a, [H_WHOSETURN]
 	ld hl, W_PLAYERDAMAGE
+	and a
 	jr z, .ok
 	ld hl, W_ENEMYDAMAGE
 .ok	
@@ -202,7 +203,6 @@ ApplyAttackToPlayerPokemonDone
 	jp DrawHUDsAndHPBars
 
 
-; @@@ formula unchanged
 CalculateDamage: ; 3df65 (f:5f65)
 ; input:
 ;	b: attack
@@ -217,7 +217,8 @@ CalculateDamage: ; 3df65 (f:5f65)
 	ldi [hl], a ; H_DIVIDEND [][x][][]
 	ld [hl], a  ; H_DIVIDEND [][][x][]
 
-; Multiply level by 2
+; Multiply (level + 1) by 2
+	inc e
 	ld a, e
 	add a
 	jr nc, .nc
@@ -237,8 +238,7 @@ CalculateDamage: ; 3df65 (f:5f65)
 	call Divide
 	pop bc
 
-; Add 2
-	inc [hl] ; H_DIVIDEND [][][][x]
+; Add 1
 	inc [hl] ; H_DIVIDEND [][][][x]
 
 	inc hl ; H_MULTIPLIER
@@ -256,8 +256,8 @@ CalculateDamage: ; 3df65 (f:5f65)
 	ld b, 4
 	call Divide
 
-; Divide by 50
-	ld [hl], 50
+; Divide by 60
+	ld [hl], 60
 	ld b, 4
 	call Divide
 
@@ -1644,7 +1644,7 @@ ExecutePlayerMove:
 	
 	call CriticalHitTest
 	call GetDamageVarsForPlayerAttack
-	; in the end, adds 1 to damage instead of original 2 (caps at 998 + 1)
+	; changed formula
 	call CalculateDamage
 	call AdjustDamageForMoveType
 	ld a,[W_MOVEMISSED]

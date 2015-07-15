@@ -2895,12 +2895,6 @@ OHKOText: ; 3dc83 (f:5c83)
 	TX_FAR _OHKOText
 	db "@"
 
-JumpToOHKOMoveEffect: ; 3e016 (f:6016)
-	call JumpMoveEffect
-	ld a, [W_MOVEMISSED]
-	dec a
-	ret
-
 ; function to determine if Counter hits and if so, how much damage it does
 HandleCounterMove: ; 3e093 (f:6093)
 ; The variables checked by Counter are updated whenever the cursor points to a new move in the battle selection menu.
@@ -3522,13 +3516,9 @@ LoadPlayerBackPic: ; 3ec92 (f:6c92)
 	ld [$ffe1], a
 	hlCoord 1, 5
 	predef_jump Func_3f0c6
-
-; does nothing since no stats are ever selected (barring glitches)
-DoubleOrHalveSelectedStats: ; 3ed02 (f:6d02)
-	callab DoubleSelectedStats
-	ld hl, HalveSelectedStats
-	ld b, BANK(HalveSelectedStats)
-	jp Bankswitch
+	
+UnusedPredef: ; 3ed02 (f:6d02)
+	ret
 
 ScrollTrainerPicAfterBattle: ; 3ed12 (f:6d12)
 	ld hl, _ScrollTrainerPicAfterBattle

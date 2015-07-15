@@ -4957,11 +4957,7 @@ INCLUDE "engine/menu/start_sub_menus.asm"
 INCLUDE "engine/items/tms.asm"
 INCLUDE "engine/battle/end_of_battle.asm"
 
-IF NEW
 INCLUDE "engine/battle/wild_encounters_new.asm"
-ELSE
-INCLUDE "engine/battle/wild_encounters.asm"
-ENDC
 
 INCLUDE "engine/battle/moveEffects/recoil_effect.asm"
 INCLUDE "engine/battle/moveEffects/conversion_effect.asm"
@@ -5418,14 +5414,9 @@ SECTION "bankE",ROMX,BANK[$E]
 INCLUDE "data/moves.asm"
 BaseStats: INCLUDE "data/base_stats.asm"
 INCLUDE "data/cries.asm"
-INCLUDE "engine/battle/unused_stats_functions.asm"
 INCLUDE "engine/battle/scroll_draw_trainer_pic.asm"
 
-IF NEW
 INCLUDE "engine/battle/trainer_ai_new.asm"
-ELSE
-INCLUDE "engine/battle/trainer_ai.asm"
-ENDC
 
 INCLUDE "engine/battle/draw_hud_pokeball_gfx.asm"
 
@@ -5445,11 +5436,7 @@ INCLUDE "engine/battle/moveEffects/reflect_light_screen_effect.asm"
 
 SECTION "bankF",ROMX,BANK[$F]
 
-IF CORE_NEW
 INCLUDE "engine/battle/core_2.asm"
-ELSE
-INCLUDE "engine/battle/core.asm"
-ENDC
 
 SECTION "bank10",ROMX,BANK[$10]
 
@@ -5917,11 +5904,7 @@ INCLUDE "scripts/mansion4.asm"
 INCLUDE "data/mapObjects/mansion4.asm"
 Mansion4Blocks: INCBIN "maps/mansion4.blk"
 
-IF NEW
 INCLUDE "engine/battle/init_battle_variables_new.asm"
-ELSE
-INCLUDE "engine/battle/init_battle_variables.asm"
-ENDC
 
 INCLUDE "engine/battle/moveEffects/paralyze_effect.asm"
 
@@ -6422,11 +6405,7 @@ Plateau_Block:     INCBIN "gfx/blocksets/plateau.bst"
 
 SECTION "bank1A",ROMX,BANK[$1A]
 
-IF NEW
 INCLUDE "engine/battle/decrement_pp_new.asm"
-ELSE
-INCLUDE "engine/battle/decrement_pp.asm"
-ENDC
 
 Version_GFX:
 IF DEF(_RED)

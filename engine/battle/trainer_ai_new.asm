@@ -156,9 +156,6 @@ StatusAilmentMoveEffects ; 57e2
 ; in particular, stat-modifying moves and other move effects
 ; that fall in-bewteen
 AIMoveChoiceModification2: ; 397e7 (e:57e7)
-	ld a, [wAILayer2Encouragement]
-	cp $1 
-	ret nz
 	ld hl, wBuffer - 1 ; temp move selection array (-1 byte offset)
 	ld de, wEnemyMonMoves ; enemy moves
 	ld b, NUM_MOVES + 1

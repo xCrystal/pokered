@@ -698,7 +698,6 @@ ReplaceFaintedEnemyMon: ; 3c664 (f:4664)
 	xor a
 	ld [W_ENEMYMOVENUM], a
 	ld [wcd6a], a
-	ld [wAILayer2Encouragement], a
 	inc a ; reset Z flag
 	ret
 
@@ -2670,10 +2669,7 @@ MonName1Text: ; 3dafb (f:5afb)
 	ld [hl], a
 	ld [wd11e], a
 	call Func_3db85
-	ld a, [wMonIsDisobedient]
-	and a
 	ld hl, Used2Text
-	ret nz
 	ld a, [wd11e]
 	cp 3
 	ld hl, Used2Text
@@ -2691,11 +2687,7 @@ Used2Text: ; 3db34 (f:5b34)
 	db $08 ; asm
 
 PrintInsteadText: ; 3db39 (f:5b39)
-	ld a, [wMonIsDisobedient]
-	and a
-	jr z, PrintCF4BText
-	ld hl, InsteadText
-	ret
+	jr PrintCF4BText
 
 InsteadText: ; 3db43 (f:5b43)
 	TX_FAR _InsteadText

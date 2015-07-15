@@ -385,7 +385,7 @@ wccd3:: ds 1 ; used in battle, pokemon, PC and game corner stuff
 wccd4:: ds 1 ; used in evolving pokemon and has a direct reference for simulated joypad stuff in vermillion and seafoam
 
 ; if [ccd5] != 1, the second AI layer is not applied
-wAILayer2Encouragement:: ; ccd5
+wUnused3:: ; ccd5
 	ds 1
 	ds 1
 
@@ -409,7 +409,7 @@ wEnemySelectedMove:: ; ccdd
 wLinkBattleRandomNumberListIndex:: ; ccde
 	ds 1
 
-wAICount:: ; ccdf
+wUnused1:: ; ccdf
 ; number of times remaining that AI action can occur
 	ds 1
 
@@ -435,7 +435,7 @@ wSafariBaitFactor:: ; cce9
 wcceb:: ds 1 ; used to save the dvs of a mon when it uses transform
 wccec:: ds 1 ; also used with above case
 
-wMonIsDisobedient:: ds 1 ; cced
+wUnused2:: ds 1 ; cced
 
 wPlayerDisabledMoveNumber:: ds 1 ; ccee
 wEnemyDisabledMoveNumber:: ds 1 ; ccef

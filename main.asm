@@ -5446,7 +5446,7 @@ INCLUDE "engine/battle/moveEffects/reflect_light_screen_effect.asm"
 SECTION "bankF",ROMX,BANK[$F]
 
 IF CORE_NEW
-INCLUDE "engine/battle/core_old.asm"
+INCLUDE "engine/battle/core_2.asm"
 ELSE
 INCLUDE "engine/battle/core.asm"
 ENDC
@@ -6422,7 +6422,11 @@ Plateau_Block:     INCBIN "gfx/blocksets/plateau.bst"
 
 SECTION "bank1A",ROMX,BANK[$1A]
 
+IF NEW
+INCLUDE "engine/battle/decrement_pp_new.asm"
+ELSE
 INCLUDE "engine/battle/decrement_pp.asm"
+ENDC
 
 Version_GFX:
 IF DEF(_RED)

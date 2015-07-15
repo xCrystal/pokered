@@ -1,3 +1,539 @@
+; adds 1 to damage and multiplies damage by %111RRRR0 / 255, where R is a random bit (min 224/255 - max 254/255)
+RandomizeDamage: ; 3e687 (f:6687)
+	ld hl, W_PLAYERDAMAGE
+	ld a, [H_WHOSETURN]
+	and a
+	jr z, .ok
+	inc hl
+	inc hl ; W_ENEMYDAMAGE
+.ok	
+	inc hl
+	inc [hl]
+	dec hl
+	
+	ld a, [hli]
+	and a
+	jr nz, .DamageGreaterThanOne
+	ld a, [hl]
+	cp 2
+	ret c ; return if damage is equal to 0 or 1
+.DamageGreaterThanOne
+	xor a
+	ld [H_MULTIPLICAND], a
+	dec hl
+	ld a, [hli]
+	ld [H_MULTIPLICAND + 1], a
+	ld a, [hl]
+	ld [H_MULTIPLICAND + 2], a
+; loop until a random number greater than or equal to 217 is generated
+.loop
+	call BattleRandom
+	and %00011110
+	add %11100000
+	ld [H_MULTIPLIER], a
+	call Multiply ; multiply damage by the random number, which is in the range [217, 255]
+	ld a, 255
+	ld [H_DIVISOR], a
+	ld b, $4
+	call Divide ; divide the result by 255
+; store the modified damage
+	ld hl, W_PLAYERDAMAGE
+	ld a, [H_WHOSETURN]
+	and a
+	jr z, .ok2
+	inc hl
+	inc hl ; W_ENEMYDAMAGE
+.ok2
+	ld a, [H_QUOTIENT + 2]
+	ld [hli], a
+	ld a, [H_QUOTIENT + 3]
+	ld [hl], a
+	ret
+
+
+OtherModifiers:
+; @@@ reflect/ls goes here
+; @@@ weather goes here
+; @@@ item boosts go here
+; double damage to deal if critical hit
+	ld a, [wCriticalHitOrOHKO]
+	dec a
+	jr z, .doubleDamage
+	ret
+	
+.doubleDamage
+	ld a, [H_WHOSETURN]
+	ld hl, W_PLAYERDAMAGE
+	jr z, .ok
+	ld hl, W_ENEMYDAMAGE
+.ok	
+	sla [hl]
+	inc hl
+	sla [hl]
+	dec hl
+	jr nc, .doubleDone
+	inc [hl]
+	
+.doubleDone
+	ld a, [hli]
+	cp 999 / $100
+	jr c, .done
+	jr nz, .cap
+	
+	ld a, [hl]
+	cp 999 % $100
+	jr c, .done	
+
+.cap	
+	ld a, 999 % $100
+	ld [hld], a
+	ld a, 999 / $100
+	ld [hl], a
+.done	
+	ret
+
+
+ApplyAttackToEnemyPokemon:
+; fallthrough
+
+ApplyDamageToEnemyPokemon:
+	ld hl,W_PLAYERDAMAGE
+	ld a,[hli]
+	ld b,a
+	ld a,[hl]
+	or b
+	jr z,ApplyAttackToEnemyPokemonDone ; we're done if damage is 0
+
+; subtract the damage from the pokemon's current HP
+; also, save the current HP at wHPBarOldHP
+	ld a,[hld]
+	ld b,a
+	ld a,[wEnemyMonHP + 1]
+	ld [wHPBarOldHP],a
+	sub b
+	ld [wEnemyMonHP + 1],a
+	ld a,[hl]
+	ld b,a
+	ld a,[wEnemyMonHP]
+	ld [wHPBarOldHP+1],a
+	sbc b
+	ld [wEnemyMonHP],a
+	jr nc,.animateHpBar
+; if more damage was done than the current HP, zero the HP and set the damage (W_PLAYERDAMAGE)
+; equal to how much HP the pokemon had before the attack
+	ld a,[wHPBarOldHP+1]
+	ld [hli],a
+	ld a,[wHPBarOldHP]
+	ld [hl],a
+	xor a
+	ld hl,wEnemyMonHP
+	ld [hli],a
+	ld [hl],a
+.animateHpBar
+	ld hl,wEnemyMonMaxHP
+	ld a,[hli]
+	ld [wHPBarMaxHP+1],a
+	ld a,[hl]
+	ld [wHPBarMaxHP],a
+	ld hl,wEnemyMonHP
+	ld a,[hli]
+	ld [wHPBarNewHP+1],a
+	ld a,[hl]
+	ld [wHPBarNewHP],a
+	hlCoord 2, 2
+	xor a
+	ld [wHPBarType],a
+	predef UpdateHPBar_Hook
+ApplyAttackToEnemyPokemonDone:
+	jp DrawHUDsAndHPBars
+	
+
+ApplyAttackToPlayerPokemon: ; 3e1a0 (f:61a0)
+; fallthrough
+
+ApplyDamageToPlayerPokemon: ; 3e200 (f:6200)
+	ld hl,W_ENEMYDAMAGE
+	ld a,[hli]
+	ld b,a
+	ld a,[hl]
+	or b
+	jr z,ApplyAttackToPlayerPokemonDone ; we're done if damage is 0
+
+; subtract the damage from the pokemon's current HP
+; also, save the current HP at wHPBarOldHP and the new HP at wHPBarNewHP
+	ld a,[hld]
+	ld b,a
+	ld a,[wBattleMonHP + 1]
+	ld [wHPBarOldHP],a
+	sub b
+	ld [wBattleMonHP + 1],a
+	ld [wHPBarNewHP],a
+	ld b,[hl]
+	ld a,[wBattleMonHP]
+	ld [wHPBarOldHP+1],a
+	sbc b
+	ld [wBattleMonHP],a
+	ld [wHPBarNewHP+1],a
+	jr nc,.animateHpBar
+; if more damage was done than the current HP, zero the HP and set the damage (W_PLAYERDAMAGE)
+; equal to how much HP the pokemon had before the attack
+	ld a,[wHPBarOldHP+1]
+	ld [hli],a
+	ld a,[wHPBarOldHP]
+	ld [hl],a
+	xor a
+	ld hl,wBattleMonHP
+	ld [hli],a
+	ld [hl],a
+	ld hl,wHPBarNewHP
+	ld [hli],a
+	ld [hl],a
+.animateHpBar
+	ld hl,wBattleMonMaxHP
+	ld a,[hli]
+	ld [wHPBarMaxHP+1],a
+	ld a,[hl]
+	ld [wHPBarMaxHP],a
+	hlCoord 10, 9
+	ld a,$01
+	ld [wHPBarType],a
+	predef UpdateHPBar_Hook
+ApplyAttackToPlayerPokemonDone
+	jp DrawHUDsAndHPBars
+
+
+; @@@ formula unchanged
+CalculateDamage: ; 3df65 (f:5f65)
+; input:
+;	b: attack
+;	c: opponent defense
+;	d: base power
+;	e: level
+
+; init math buffer
+	xor a
+	ld hl, H_DIVIDEND
+	ldi [hl], a ; H_DIVIDEND [x][][][]
+	ldi [hl], a ; H_DIVIDEND [][x][][]
+	ld [hl], a  ; H_DIVIDEND [][][x][]
+
+; Multiply level by 2
+	ld a, e
+	add a
+	jr nc, .nc
+	push af
+	ld a, 1
+	ld [hl], a ; H_DIVIDEND [][][x][]
+	pop af
+.nc	
+	inc hl
+	ldi [hl], a ; H_DIVIDEND [][][][x]
+
+; Divide by 5
+	ld a, 5
+	ldd [hl], a ; H_DIVISOR
+	push bc
+	ld b, 4
+	call Divide
+	pop bc
+
+; Add 2
+	inc [hl] ; H_DIVIDEND [][][][x]
+	inc [hl] ; H_DIVIDEND [][][][x]
+
+	inc hl ; H_MULTIPLIER
+
+; Multiply by attack base power
+	ld [hl], d
+	call Multiply
+
+; Multiply by attack stat
+	ld [hl], b
+	call Multiply
+
+; Divide by defender's defense stat
+	ld [hl], c
+	ld b, 4
+	call Divide
+
+; Divide by 50
+	ld [hl], 50
+	ld b, 4
+	call Divide
+
+; save result into p/e damage
+	ld hl, W_PLAYERDAMAGE
+	ld a, [H_WHOSETURN]
+	and a
+	jr z, .ok
+	inc hl
+	inc hl ; W_ENEMYDAMAGE
+	
+.ok
+	ld b, [hl]
+	ld a, [H_QUOTIENT + 3]
+	add b
+	ld [H_QUOTIENT + 3], a
+	jr nc, .asm_3dfd0
+
+	ld a, [H_QUOTIENT + 2]
+	inc a
+	ld [H_QUOTIENT + 2], a
+	and a
+	jr z, .asm_3e004
+
+.asm_3dfd0
+	ld a, [H_QUOTIENT]
+	ld b, a
+	ld a, [H_QUOTIENT + 1]
+	or a
+	jr nz, .asm_3e004
+
+	ld a, [H_QUOTIENT + 2]
+	cp 998 / $100
+	jr c, .asm_3dfe8
+	cp 998 / $100 + 1
+	jr nc, .asm_3e004
+	ld a, [H_QUOTIENT + 3]
+	cp 998 % $100
+	jr nc, .asm_3e004
+
+.asm_3dfe8
+	inc hl
+	ld a, [H_QUOTIENT + 3]
+	ld b, [hl]
+	add b
+	ld [hld], a
+
+	ld a, [H_QUOTIENT + 2]
+	ld b, [hl]
+	adc b
+	ld [hl], a
+	jr c, .asm_3e004
+
+	ld a, [hl]
+	cp 998 / $100
+	jr c, .asm_3e00a
+	cp 998 / $100 + 1
+	jr nc, .asm_3e004
+	inc hl
+	ld a, [hld]
+	cp 998 % $100
+	jr c, .asm_3e00a
+
+.asm_3e004
+; cap at 998
+	ld a, 998 / $100
+	ld [hli], a
+	ld a, 998 % $100
+	ld [hld], a
+
+.asm_3e00a
+; add 1 (minimum damage is 1)
+; brings cap to 999
+	inc hl
+	ld a, [hl]
+	add 1
+	ld [hld], a
+	jr nc, .done
+	inc [hl]
+
+.done
+	ret
+
+
+; swap player and enemy in commentary for enemy attack
+ScaleStats:
+	ld a, [hli]
+	ld l, [hl]
+	ld h, a ; hl = player's offensive stat
+	or b ; is either high byte nonzero?
+	jr z, .next2 ; if not, we don't need to scale
+	
+; bc /= 4 (scale enemy's defensive stat)
+	srl b
+	rr c
+	srl b
+	rr c
+	
+	ld a, c
+	or b ; is the player's offensive stat 0?
+	jr nz, .next1
+	inc c ; if the player's offensive stat is 0, bump it up to 1	
+	
+.next1
+; hl /= 4 (scale player's offensive stat)
+	srl h
+	rr l
+	srl h
+	rr l
+	
+	ld a, l
+	or h ; is the player's offensive stat 0?
+	jr nz, .next2
+	inc l ; if the player's offensive stat is 0, bump it up to 1
+	
+.next2
+; b = player's offensive stat (possibly scaled)
+; c = enemy's defensive stat (possibly scaled)
+	ld b, l
+	ret
+
+
+; sets b, c, d, and e for the CalculateDamage routine in the case of an attack by the enemy mon
+GetDamageVarsForEnemyAttack:
+; d = move power
+	ld hl, W_ENEMYMOVEPOWER
+	ld a, [hli]
+	ld d, a ; d = move power
+	
+; is the move physical or special?
+	ld a, [hl] ; W_ENEMYMOVETYPE
+	ld hl, SpecialTypesArray
+	push de
+	ld de, 1	
+	call IsInArray
+	pop de
+	jr c, .specialAttack
+	
+.physicalAttack
+; bc = player defense
+	ld hl, wBattleMonDefense
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+; hl = enemy attack
+	ld hl, wEnemyMonAttack
+	jr .scaleStats
+	
+.specialAttack
+; bc = player special @@@ special defense
+	ld hl, wBattleMonSpecial
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+; hl = enemy special	
+	ld hl, wEnemyMonSpecial
+	
+; if either the offensive or defensive stat is too large to store in a byte, scale both stats by dividing them by 4
+; this allows values with up to 10 bits (values up to 1023) to be handled
+; anything larger will wrap around
+.scaleStats
+	call ScaleStats
+
+; e = level		
+	ld a, [wEnemyMonLevel]
+	ld e, a
+	ret
+
+; sets b, c, d, and e for the CalculateDamage routine in the case of an attack by the player mon
+; b = player's offensive stat (possibly scaled)
+; c = enemy's defensive stat (possibly scaled)
+; d = move power
+; e = player level	
+GetDamageVarsForPlayerAttack:
+; d = move power
+	ld hl, W_PLAYERMOVEPOWER
+	ld a, [hli]
+	ld d, a ; d = move power
+	
+; is the move physical or special?
+	ld a, [hl] ; W_PLAYERMOVETYPE
+	ld hl, SpecialTypesArray
+	push de
+	ld de, 1
+	call IsInArray
+	pop de
+	jr c, .specialAttack
+	
+.physicalAttack
+; bc = enemy defense
+	ld hl, wEnemyMonDefense
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+; hl = player attack
+	ld hl, wBattleMonAttack
+	jr .scaleStats
+	
+.specialAttack
+; bc = enemy special @@@ special defense
+	ld hl, wEnemyMonSpecial
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+; hl = player special	
+	ld hl, wBattleMonSpecial
+	
+; if either the offensive or defensive stat is too large to store in a byte, scale both stats by dividing them by 4
+; this allows values with up to 10 bits (values up to 1023) to be handled
+; anything larger will wrap around
+.scaleStats
+	call ScaleStats
+
+; e = level		
+	ld a, [wBattleMonLevel]
+	ld e, a
+	ret
+	
+SpecialTypesArray:
+	db GHOST
+	db FIRE
+	db WATER
+	db GRASS
+	db ELECTRIC
+	db PSYCHIC
+	db ICE
+	db $ff
+
+; determines if attack is a critical hit
+CriticalHitTest:
+	ld a, [H_WHOSETURN]
+	and a
+	ld a, [wEnemyMonSpecies]
+	ld hl, W_ENEMYMOVENUM
+	jr nz, .criticalHitTest
+	ld a, [wBattleMonSpecies]
+	ld hl, W_PLAYERMOVENUM
+	
+.criticalHitTest
+; get attacking mon base speed stat
+	ld [wd0b5], a
+	call GetMonHeader
+	ld a, [W_MONHBASESPEED]
+; add 50	
+	add 50
+	ld b, a
+
+; check if a high critical rate move was used
+	ld c, [hl] ; MOVENUM
+	ld hl, HighCriticalMoves
+.loop
+	ld a, [hli]
+	cp c
+	jr z, .highCritical
+; $ff entry terminates loop
+	inc a
+	jr nz, .loop
+	
+; it's a regular move: (base speed + 50) / 4
+	srl b ; divide by 2
+
+; it's a high critical move: (base speed + 50) / 2
+.highCritical
+	call BattleRandom
+	srl b ; divide by 2
+	cp b
+	ret nc
+
+; move is a critical hit, so set flag
+	ld a, $1
+	ld [wCriticalHitOrOHKO], a
+	ret
+	
+HighCriticalMoves:
+	db $ff
+
 ; some tests that need to pass for a move to hit
 MoveHitTest: ; 3e56b (f:656b)
 ; scale the move accuracy according to attacker's accuracy and target's evasion
@@ -11,12 +547,11 @@ MoveHitTest: ; 3e56b (f:656b)
 	ld b,a
 	
 .doAccuracyCheck
-; if the random number generated is 255, the move hits.
-; else, if the random number generated is greater than 
-; or equal to the scaled accuracy, the move misses
-	call BattleRandom
+; if the accuracy is 255, the move hits
 	cp $ff
 	jr z, .moveDidntMiss
+; else, if the random number generated is greater than or equal to the scaled accuracy, the move misses
+	call Random
 	cp b
 	jr nc,.moveMissed
 
@@ -88,7 +623,10 @@ SelectEnemyMove: ; 3d564 (f:5564)
 	ld a, [W_ISINBATTLE]
 	dec a
 	jr z, .chooseRandomMove ; wild battle
-	callab AIEnemyTrainerChooseMoves ; trainer battle @@@ this needs lots of work!
+
+; returns enemy trainer chosen move at b	
+;	callab AIEnemyTrainerChooseMoves ; trainer battle @@@ this needs lots of work!
+;	jr .moveChosen
 	
 .chooseRandomMove
 	ld hl, wEnemyMonMoves
@@ -1064,6 +1602,13 @@ MainInBattleLoop:
 	jp MainInBattleLoop
 	
 ExecutePlayerMove:
+; clear player damage
+	ld hl, W_PLAYERDAMAGE
+	xor a
+	ld [hli], a
+	ld [hl], a
+
+; can execute move?	
 	ld a, [wPlayerSelectedMove]
 	inc a
 	jp z, ExecutePlayerMoveDone
@@ -1078,7 +1623,7 @@ ExecutePlayerMove:
 	call GetCurrentMove
 	call PrintMonName1Text
 
-; decrement selected move PP	
+; decrement PP of move at de (selected move)
 	ld hl,DecrementPP
 	ld de,wPlayerSelectedMove ; pointer to the move just used
 	ld b,BANK(DecrementPP)
@@ -1086,19 +1631,32 @@ ExecutePlayerMove:
 	
 ; accuracy test
 	call MoveHitTest	
-	
-; damage calculation
-	call CriticalHitTest
-	call GetDamageVarsForPlayerAttack
-	call CalculateDamage
-	call AdjustDamageForMoveType
-	call RandomizeDamage
 
-; play animation unless the move missed
+; branch ahead the move missed
 	ld a,[W_MOVEMISSED]
 	and a
 	jr nz, .printMoveFailureText
 	
+; damage calculation (skip if non-damaging move)
+	ld a, [W_PLAYERMOVEPOWER]
+	and a
+	jr z, .playAnimation
+	
+	call CriticalHitTest
+	call GetDamageVarsForPlayerAttack
+	; in the end, adds 1 to damage instead of original 2 (caps at 998 + 1)
+	call CalculateDamage
+	call AdjustDamageForMoveType
+	ld a,[W_MOVEMISSED]
+	and a
+	jr nz, .printMoveFailureText
+	; doubles damage if critical hit
+	call OtherModifiers
+	; adds 1 to damage and multiplies damage by %111RRRR0 / 255, where R is a random bit (min 224/255 - max 254/255)	
+	call RandomizeDamage
+
+; play animation
+.playAnimation
 	ld a, 4 ; animation BlinkEnemyMonSprite
 	ld [wAnimationType],a
 	ld a,[W_PLAYERMOVENUM]
@@ -1111,7 +1669,7 @@ ExecutePlayerMove:
 	call PrintMoveFailureText
 	jr ExecutePlayerMoveDone
 	
-; apply damage if the move didn't miss
+; apply attack if the move didn't miss
 .moveDidNotMiss
 	call ApplyAttackToEnemyPokemon
 	call PrintCriticalOHKOText
@@ -1135,6 +1693,13 @@ ExecutePlayerMoveDone:
 	
 
 ExecuteEnemyMove:
+; clear enemy damage
+	ld hl, W_ENEMYDAMAGE
+	xor a
+	ld [hli], a
+	ld [hl], a
+
+; can execute move?	
 	ld a, [wEnemySelectedMove]
 	inc a
 	jp z, ExecuteEnemyMoveDone
@@ -1164,20 +1729,30 @@ ExecuteEnemyMove:
 ; decrement selected move PP @@@
 	
 ; accuracy test
-	call MoveHitTest	
-	
-; damage calculation
-	call CriticalHitTest
-	call GetDamageVarsForEnemyAttack
-	call CalculateDamage
-	call AdjustDamageForMoveType
-	call RandomizeDamage
+	call MoveHitTest
 
-; play animation unless the move missed
+; branch ahead if the move missed
 	ld a,[W_MOVEMISSED]
 	and a
 	jr nz, .printMoveFailureText
 	
+; damage calculation (skip if non-damaging move)
+	ld a, [W_ENEMYMOVEPOWER]
+	and a
+	jr z, .playAnimation
+	
+	call CriticalHitTest
+	call GetDamageVarsForEnemyAttack
+	call CalculateDamage
+	call AdjustDamageForMoveType
+	ld a,[W_MOVEMISSED]
+	and a
+	jr nz, .printMoveFailureText
+	call OtherModifiers	
+	call RandomizeDamage
+
+.playAnimation	
+; play animation
 	ld a, 1 ; animation ShakeScreenVertically
 	ld [wAnimationType],a
 	ld a, [W_ENEMYMOVENUM]
@@ -1190,7 +1765,7 @@ ExecuteEnemyMove:
 	call PrintMoveFailureText
 	jr ExecuteEnemyMoveDone
 	
-; apply damage if the move didn't miss
+; apply attack if the move didn't miss
 .moveDidNotMiss
 	call ApplyAttackToPlayerPokemon
 	call PrintCriticalOHKOText

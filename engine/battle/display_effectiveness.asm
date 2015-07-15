@@ -1,4 +1,5 @@
 DisplayEffectiveness: ; 2fb7b (b:7b7b)
+; @@@TODO fix this
 	ld a, [wDamageMultipliers]
 	and a, $7F
 	cp a, $0A

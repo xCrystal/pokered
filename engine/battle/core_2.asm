@@ -3164,6 +3164,13 @@ AdjustDamageForMoveType: ; 3e3a5 (f:63a5)
 	ld c,l    ; bc = damage
 	srl b
 	rr c      ; bc = floor(0.5 * damage)
+	
+	ld a,b
+	or c
+	jr z, .nullStabBonus
+	dec bc
+	
+.nullStabBonus	
 	add hl,bc ; hl = floor(1.5 * damage)
 ; store damage
 	pop af

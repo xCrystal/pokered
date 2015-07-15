@@ -1642,6 +1642,7 @@ ExecutePlayerMove:
 	call GetDamageVarsForPlayerAttack
 	; changed formula
 	call CalculateDamage
+	; stab bonus is = damage + (damage - 1) * 0.5 [min bonus is 0]
 	call AdjustDamageForMoveType
 	ld a,[W_MOVEMISSED]
 	and a

@@ -696,9 +696,7 @@ SendOutMon: ; 3cc91 (f:4c91)
 	ld [hl], a
 	
 ; player battle statuses	
-	ld hl, wPlayerStatsToDouble
-	ld [hli], a
-	ld [hli], a
+	ld hl, W_PLAYERBATTSTATUS1
 	ld [hli], a
 	ld [hli], a
 	ld [hl], a
@@ -971,9 +969,7 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 	xor a
 	
 ; clear enemy battstatuses	
-	ld hl,wEnemyStatsToDouble
-	ld [hli],a
-	ld [hli],a
+	ld hl,W_ENEMYBATTSTATUS1
 	ld [hli],a
 	ld [hli],a
 	ld [hl],a

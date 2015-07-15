@@ -60,12 +60,7 @@ EndOfBattle: ; 137aa (4:77aa)
 	ld [hli], a
 	ld [hl], a
 	ld [wListScrollOffset], a
-	ld hl, wPlayerStatsToDouble
-	ld b, $18
-.loop
-	ld [hli], a
-	dec b
-	jr nz, .loop
+
 	ld hl, wd72c
 	set 0, [hl]
 	call WaitForSoundToFinish

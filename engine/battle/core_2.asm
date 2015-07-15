@@ -533,9 +533,7 @@ FaintEnemyPokemon ; 0x3c567
 	res AttackingMultipleTimes, [hl]
 	xor a
 	ld [wPlayerNumHits], a
-	ld hl, wEnemyStatsToDouble ; clear enemy statuses
-	ld [hli], a
-	ld [hli], a
+	ld hl, W_ENEMYBATTSTATUS1 ; clear enemy statuses
 	ld [hli], a
 	ld [hli], a
 	ld [hl], a
@@ -3427,13 +3425,6 @@ DoBattleTransition: ; 3ec32 (f:6c32)
 	ld [hWY], a
 	ld [rWY], a
 	ld [hTilesetType], a
-	ld hl, wPlayerStatsToDouble
-	ld [hli], a
-	ld [hli], a
-	ld [hli], a
-	ld [hli], a
-	ld [hl], a
-	ld [W_PLAYERDISABLEDMOVE], a
 	ret
 
 ; swaps the level values of the BattleMon and EnemyMon structs

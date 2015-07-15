@@ -1016,12 +1016,10 @@ wCriticalHitOrOHKO:: ; d05e
 W_MOVEMISSED:: ; d05f
 	ds 1
 
-wPlayerStatsToDouble:: ; d060
-; always 0
+wUnused4:: ; d060
 	ds 1
 
-wPlayerStatsToHalve:: ; d061
-; always 0
+wUnused5:: ; d061
 	ds 1
 
 W_PLAYERBATTSTATUS1:: ; d062
@@ -1052,12 +1050,10 @@ W_PLAYERBATTSTATUS3:: ; d064
 ; bit 3 - tranformed
 	ds 1
 
-wEnemyStatsToDouble:: ; d065
-; always 0
+wUnused6:: ; d065
 	ds 1
 
-wEnemyStatsToHalve:: ; d066
-; always 0
+wUnused7:: ; d066
 	ds 1
 
 W_ENEMYBATTSTATUS1:: ; d067

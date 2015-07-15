@@ -35,7 +35,7 @@ InitBattleVariables: ; 525af (14:65af)
 	
 ; clear all addresses from wPartyGainExpFlags to wPlayerBideAccumulatedDamage (d074) 
 ; includes wPartyGainExpFlags, wDamageMultipliers wCriticalHitOrOHKO,
-; W_MOVEMISSED, p/e stats to double, p/e battstatuses, 
+; W_MOVEMISSED, p/e stats to double/halve, p/e battstatuses, 
 ; p/e confused/toxic counters, p/e disabled move, 
 ; p/e num hits/attacks left, and player bide accum. damage.
 	ld hl, wPartyGainExpFlags

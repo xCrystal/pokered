@@ -548,6 +548,7 @@ MoveHitTest: ; 3e56b (f:656b)
 	
 .doAccuracyCheck
 ; if the accuracy is 255, the move hits
+	ld a,b
 	cp $ff
 	jr z, .moveDidntMiss
 ; else, if the random number generated is greater than or equal to the scaled accuracy, the move misses

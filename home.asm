@@ -3671,7 +3671,7 @@ CalcStats:: ; 3936 (0:3936)
 	ld [de], a
 	inc de
 	ld a, c
-	cp $5 ; @@@this has to be 6 to account for spdef
+	cp NUM_STATS
 	jr nz, .statsLoop
 	ret
 

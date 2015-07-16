@@ -3791,7 +3791,7 @@ _AddPartyMon: ; f2e5 (3:72e5)
 	ld a, [H_MULTIPLICAND+2]
 	ld [de], a
 	xor a
-	ld b, $a
+	ld b, NUM_STATS * 2
 .writeEVsLoop              ; set all EVs to 0
 	inc de
 	ld [de], a
@@ -3822,7 +3822,7 @@ _AddPartyMon: ; f2e5 (3:72e5)
 	dec a
 	jr nz, .calcFreshStats
 	ld hl, wEnemyMonMaxHP ; wEnemyMonMaxHP
-	ld bc, $a
+	ld bc, NUM_STATS * 2
 	call CopyData          ; copy stats of cur enemy mon
 	pop hl
 	jr .done

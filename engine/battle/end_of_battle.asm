@@ -54,6 +54,7 @@ EndOfBattle: ; 137aa (4:77aa)
 	ld [wd11f], a
 	ld [wNumRunAttempts], a
 	ld [wEscapedFromBattle], a
+	ld [wAddPartyMonPPFromEnemyMonStruct], a
 	ld hl, wcc2b
 	ld [hli], a
 	ld [hli], a

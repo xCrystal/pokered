@@ -3800,7 +3800,20 @@ _AddPartyMon: ; f2e5 (3:72e5)
 	inc de
 	inc de
 	pop hl
-	call AddPartyMon_WriteMovePP
+	
+	ld a, [wAddPartyMonPPFromEnemyMonStruct]
+	push af
+	and a
+	call z, AddPartyMon_WriteMovePP
+	pop af
+	push af
+	cp 1
+	call z, AddPPFromEnemyMonStruct
+	pop af
+	; leaving this option here in case I eventually need it
+	cp 2
+	call z, SkipPP
+
 	inc de
 	ld a, [W_CURENEMYLVL] ; W_CURENEMYLVL
 	ld [de], a
@@ -3823,6 +3836,30 @@ _AddPartyMon: ; f2e5 (3:72e5)
 	scf
 	ret
 
+SkipPP:
+	inc de
+	inc de
+	inc de
+	inc de
+	inc hl
+	inc hl
+	inc hl
+	inc hl
+	ret
+	
+AddPPFromEnemyMonStruct:
+	push bc
+	ld b, 4
+	ld hl, wEnemyMonPP
+.nextMove
+	ld a, [hli]
+	inc de	
+	ld [de], a
+	dec b
+	jr nz, .nextMove
+	pop bc
+	ret
+	
 LoadMovePPs: ; f473 (3:7473)
 	call GetPredefRegisters
 	; fallthrough

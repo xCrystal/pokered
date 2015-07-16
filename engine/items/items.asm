@@ -143,8 +143,7 @@ ItemUseBall: ; d687 (3:5687)
 	call CopyData ; save the player's name in the Wild Monster data (part of the Cinnabar Island Missingno glitch)
 	jp .BallSuccess	;$578b
 .notOldManBattle	;$56e9
-; if not fighting ghost Marowak, loop until a random number in the current
-; pokeball's allowed range is found
+; loop until a random number in the current pokeball's allowed range is found
 .loop	;$56fa
 	call Random
 	ld b,a
@@ -349,7 +348,7 @@ ItemUseBall: ; d687 (3:5687)
 	ld hl,W_ENEMYBATTSTATUS3
 	bit Transformed,[hl]
 	jr z,.next15
-	ld a,$4c
+	ld a,DITTO
 	ld [wEnemyMonSpecies2],a
 	jr .next16
 .next15	;$5871
@@ -366,7 +365,10 @@ ItemUseBall: ; d687 (3:5687)
 	ld [wcf91],a
 	ld a,[wEnemyMonLevel]
 	ld [W_CURENEMYLVL],a
+	ld a,2
+	ld [wAddPartyMonPPFromEnemyMonStruct],a
 	callab LoadEnemyMonData
+	
 	pop af
 	ld [wcf91],a
 	pop hl
@@ -416,6 +418,8 @@ ItemUseBall: ; d687 (3:5687)
 	xor a
 	ld [wcc49],a
 	call ClearSprites
+	ld a,1
+	ld [wAddPartyMonPPFromEnemyMonStruct],a
 	call AddPartyMon	;add mon to Party
 	jr .End
 .sendToBox	;$5907

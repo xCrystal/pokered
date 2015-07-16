@@ -1017,11 +1017,17 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 ; PPs
 .loadMovePPs
 ; this was buggy, PPs were loaded shifted one byte
+
+	ld a, [wAddPartyMonPPFromEnemyMonStruct]
+	cp 2
+	jr z, .skipPP
+
 	ld hl, wEnemyMonMoves
 	ld de, wEnemyMonPP - 1
 	predef LoadMovePPs
-	
-; Base stats	
+
+.skipPP	
+; Base stats
 	ld hl, W_MONHBASESTATS
 	ld de, wEnemyMonBaseStats
 	ld b, NUM_STATS

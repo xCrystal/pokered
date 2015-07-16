@@ -409,8 +409,10 @@ wEnemySelectedMove:: ; ccdd
 wLinkBattleRandomNumberListIndex:: ; ccde
 	ds 1
 
-wUnused1:: ; ccdf
-; number of times remaining that AI action can occur
+wAddPartyMonPPFromEnemyMonStruct:: ; ccdf
+; 00: normal
+; 01: AddPPFromEnemyMonStruct
+; 02: skip PP
 	ds 1
 
 	ds 2

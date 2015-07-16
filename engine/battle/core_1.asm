@@ -201,6 +201,114 @@ ApplyDamageToPlayerPokemon: ; 3e200 (f:6200)
 	predef UpdateHPBar_Hook
 ApplyAttackToPlayerPokemonDone
 	jp DrawHUDsAndHPBars
+	
+
+; function to adjust the base damage of an attack to account for type effectiveness
+AdjustDamageForMoveType: ; 3e3a5 (f:63a5)
+; values for player turn
+	ld hl,wBattleMonType
+	ld a,[hli]
+	ld b,a    ; b = type 1 of attacker
+	ld c,[hl] ; c = type 2 of attacker
+	ld hl,wEnemyMonType
+	ld a,[hli]
+	ld d,a    ; d = type 1 of defender
+	ld e,[hl] ; e = type 2 of defender
+	ld a,[W_PLAYERMOVETYPE]
+	ld [wd11e],a
+	ld a,[H_WHOSETURN]
+	and a
+	jr z,.next
+; values for enemy turn
+	ld hl,wEnemyMonType
+	ld a,[hli]
+	ld b,a    ; b = type 1 of attacker
+	ld c,[hl] ; c = type 2 of attacker
+	ld hl,wBattleMonType
+	ld a,[hli]
+	ld d,a    ; d = type 1 of defender
+	ld e,[hl] ; e = type 2 of defender
+	ld a,[W_ENEMYMOVETYPE]
+	ld [wd11e],a
+.next
+	ld a,[wd11e] ; move type
+	cp b ; does the move type match type 1 of the attacker?
+	jr z,.sameTypeAttackBonus
+	cp c ; does the move type match type 2 of the attacker?
+	jr z,.sameTypeAttackBonus
+	jr .skipSameTypeAttackBonus
+.sameTypeAttackBonus
+; if the move type matches one of the attacker's types
+; multiply by 3/2
+	ld hl, H_MULTIPLIER
+	ld [hl], 3
+	call Multiply
+	
+	ld [hl], 2
+	ld b, 4
+	call Divide
+	
+	ld hl,wDamageMultipliers
+	set 7,[hl] ; STAB
+.skipSameTypeAttackBonus
+	ld a,[wd11e]
+	ld b,a ; b = move type
+	ld hl,TypeEffects
+.loop
+	ld a,[hli] ; a = "attacking type" of the current type pair
+	cp a,$ff
+	jr z,.done
+	cp b ; does move type match "attacking type"?
+	jr nz,.nextTypePair
+	ld a,[hl] ; a = "defending type" of the current type pair
+	cp d ; does type 1 of defender match "defending type"?
+	jr z,.matchingPairFound
+	cp e ; does type 2 of defender match "defending type"?
+	jr z,.matchingPairFound
+	jr .nextTypePair
+.matchingPairFound
+; if the move type matches the "attacking type" and one of the defender's types matches the "defending type"
+	push hl
+	push bc
+	inc hl
+	ld a,[wDamageMultipliers]
+	and a,$80
+	ld b,a
+	ld a,[hl] ; a = damage multiplier
+	ld [H_MULTIPLIER],a
+
+; done if type immunity	
+	and a
+	jr z, .typeImmunityDone
+
+; apply damage multiplier (5 or 20)
+	add b
+	ld [wDamageMultipliers],a
+	call Multiply
+
+; divide by 10	
+	ld a,10
+	ld [H_DIVISOR],a
+	ld b,$04
+	call Divide
+
+	pop bc
+	pop hl
+.nextTypePair
+	inc hl
+	inc hl
+	jp .loop
+.done
+	ret
+	
+.typeImmunityDone
+;	xor a
+	ld [wDamageMultipliers],a
+	inc a
+	ld [W_MOVEMISSED],a
+	pop bc
+	pop hl
+	ret	
 
 
 CalculateDamage: ; 3df65 (f:5f65)
@@ -209,6 +317,7 @@ CalculateDamage: ; 3df65 (f:5f65)
 ;	c: opponent defense
 ;	d: base power
 ;	e: level
+; for max. level = 100 only 
 
 ; init math buffer
 	xor a
@@ -216,31 +325,17 @@ CalculateDamage: ; 3df65 (f:5f65)
 	ldi [hl], a ; H_DIVIDEND [x][][][]
 	ldi [hl], a ; H_DIVIDEND [][x][][]
 	ld [hl], a  ; H_DIVIDEND [][][x][]
-
+	
 ; Multiply (level + 1) by 2
 	inc e
 	ld a, e
 	add a
-	jr nc, .nc
-	push af
-	ld a, 1
-	ld [hl], a ; H_DIVIDEND [][][x][]
-	pop af
-.nc	
 	inc hl
-	ldi [hl], a ; H_DIVIDEND [][][][x]
+	ld [hl], a ; H_DIVIDEND [][][][x]
 
-; Divide by 5
-	ld a, 5
-	ldd [hl], a ; H_DIVISOR
-	push bc
-	ld b, 4
-	call Divide
-	pop bc
-
-; Add 1
+; Add 2
 	inc [hl] ; H_DIVIDEND [][][][x]
-
+	inc [hl] ; H_DIVIDEND [][][][x]	
 	inc hl ; H_MULTIPLIER
 
 ; Multiply by attack base power
@@ -251,17 +346,36 @@ CalculateDamage: ; 3df65 (f:5f65)
 	ld [hl], b
 	call Multiply
 
+; Divide by 10
+; this is here to prevent a potential H_MULTIPLICAND overflow
+; maximum possible H_MULTIPLICAND value is eventually 0xede3f4
+	ld [hl], 10
+	ld b, 4
+	call Divide		
+	
+; Apply type matchup and STAB
+	push hl
+	push de
+	push bc
+	push af
+	call AdjustDamageForMoveType
+	pop af
+	pop bc
+	pop de
+	pop hl
+
 ; Divide by defender's defense stat
 	ld [hl], c
 	ld b, 4
 	call Divide
 
-; Divide by 60
-	ld [hl], 60
+; Divide by 30
+	ld [hl], 30
 	ld b, 4
 	call Divide
-
+	
 ; save result into p/e damage
+; maximum possible value is 0xfdbff
 	ld hl, W_PLAYERDAMAGE
 	ld a, [H_WHOSETURN]
 	and a
@@ -1641,10 +1755,8 @@ ExecutePlayerMove:
 	
 	call CriticalHitTest
 	call GetDamageVarsForPlayerAttack
-	; changed formula
+	; changed formula, includes type matchup and stab bonuses for more accuracy
 	call CalculateDamage
-	; stab bonus is = damage + (damage - 1) * 0.5 [min bonus is 0]
-	call AdjustDamageForMoveType
 	ld a,[W_MOVEMISSED]
 	and a
 	jr nz, .printMoveFailureText
@@ -1742,7 +1854,6 @@ ExecuteEnemyMove:
 	call CriticalHitTest
 	call GetDamageVarsForEnemyAttack
 	call CalculateDamage
-	call AdjustDamageForMoveType
 	ld a,[W_MOVEMISSED]
 	and a
 	jr nz, .printMoveFailureText

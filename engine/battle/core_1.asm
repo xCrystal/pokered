@@ -705,6 +705,7 @@ InitTurnVariables:
 ; init damage multipliers to neutral	
 	ld a, $a
 	ld [wDamageMultipliers], a
+	ret
 
 	
 ; return selected move at wEnemySelectedMove
@@ -744,29 +745,50 @@ SelectEnemyMove: ; 3d564 (f:5564)
 ;	jr .moveChosen
 	
 .chooseRandomMove
+; make sure at least one move has PP
+; assumes bits 6 and 7 used for identifying PP Ups are always 0
+	ld hl, wEnemyMonPP
+	ld a, [hli]
+	or [hl]
+	jr nz, .canSelectMove
+	inc hl	
+	ld a, [hli]
+	or [hl]
+	jr z, .useStruggle
+	
+.canSelectMove
+	ld de, wEnemyMonPP
 	ld hl, wEnemyMonMoves
 	call BattleRandom
 	ld b, $0
+	
 	cp $40 ; select move 1 in [0,3f] (64/256 chance)
 	jr c, .moveChosen
 	inc hl
+	inc de
 	inc b
 	cp $80 ; select move 2 in [40,7f] (64/256 chance)
 	jr c, .moveChosen
 	inc hl
+	inc de
 	inc b
 	cp $c0 ; select move 3 in [80,bf] (64/256 chance)
 	jr c, .moveChosen
 	inc hl
+	inc de
 	inc b ; select move 4 in [c0,ff] (64/256 chance)
 	
 .moveChosen
 	ld a, b
 	ld [wEnemyMoveListIndex], a
-
+	
+	ld a, [de]
+	and a
+	jr z, .chooseRandomMove ; move with no PP left, try again
+	
 	ld a, [hl]
 	and a
-	jr z, .chooseRandomMove ; move non-existant, try again
+	jr z, .chooseRandomMove ; move non-existant, try again	
 
 ; save selected move at wEnemySelectedMove
 .done
@@ -992,10 +1014,11 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 	predef WriteMonMoves ; get moves based on current level ; @@@ dont get the last four, get them at random (based on exp etc)
 	; at engine/evos_moves.asm
 
-; PPs	
+; PPs
 .loadMovePPs
+; this was buggy, PPs were loaded shifted one byte
 	ld hl, wEnemyMonMoves
-	ld de, wEnemyMonPP
+	ld de, wEnemyMonPP - 1
 	predef LoadMovePPs
 	
 ; Base stats	
@@ -1137,7 +1160,7 @@ EnemySendOutFirstMon: ; 3c92a (f:492a)
 
 ; find enemy mon in the next position
 ; @@@ this means, AI automatically sends enemy mons in order
-; if it's first mon, wEnemyMonPartyPos is $FF
+; if trainer is yet to send first mon, wEnemyMonPartyPos is $FF
 .next2
 	inc b
 	ld a,[wEnemyMonPartyPos]
@@ -1735,10 +1758,8 @@ ExecutePlayerMove:
 	call PrintMonName1Text
 
 ; decrement PP of move at de (selected move)
-	ld hl,DecrementPP
 	ld de,wPlayerSelectedMove ; pointer to the move just used
-	ld b,BANK(DecrementPP)
-	call Bankswitch
+	callba DecrementPP
 	
 ; accuracy test
 	call MoveHitTest	
@@ -1836,7 +1857,9 @@ ExecuteEnemyMove:
 	call GetCurrentMove
 	call PrintMonName1Text
 	
-; decrement selected move PP @@@
+; decrement selected move PP
+	ld de,wEnemySelectedMove ; pointer to the move just used
+	callba DecrementPP
 	
 ; accuracy test
 	call MoveHitTest

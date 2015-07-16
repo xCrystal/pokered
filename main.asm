@@ -5389,6 +5389,7 @@ SECTION "Pics 4", ROMX, BANK[PICS_4]
 
 
 SECTION "Battle (bank C)", ROMX, BANK[$C]
+INCLUDE "engine/battle/decrement_pp_new.asm"
 INCLUDE "engine/battle/moveEffects/mist_effect.asm"
 INCLUDE "engine/battle/moveEffects/one_hit_ko_effect.asm"
 
@@ -6404,8 +6405,6 @@ Plateau_Block:     INCBIN "gfx/blocksets/plateau.bst"
 
 
 SECTION "bank1A",ROMX,BANK[$1A]
-
-INCLUDE "engine/battle/decrement_pp_new.asm"
 
 Version_GFX:
 IF DEF(_RED)

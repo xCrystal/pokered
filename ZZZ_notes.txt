@@ -12,4 +12,3 @@ DONE:
 	- 255/256 accuracy
 	- AI selects move before player can switch out
 	- Defensive stat becoming 0 during stat scaling
-	- PP struct shifted one byte

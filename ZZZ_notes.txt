@@ -1,0 +1,15 @@
+DONE:
+ - Apply color hack engine
+ - Update status and battle screen
+	- Status screen has exp bar
+ - Minimal battle core function and loop
+ - Initializing battle variables cleaned up
+ - Adjust damage calculation
+ - Enemy mons have functional PP
+ - Bug fixes from original Pokered
+	- Victory music bug
+	- "Cinnabar shore" bug (adjust tiles checked)
+	- 255/256 accuracy
+	- AI selects move before player can switch out
+	- Defensive stat becoming 0 during stat scaling
+	- PP struct shifted one byte

@@ -1878,8 +1878,8 @@ PrintListMenuEntries:: ; 2e5a (0:2e5a)
 	and a ; is it a list of party pokemon or box pokemon?
 	jr z,.skipCopyingLevel
 .copyLevel
-	ld a,[wLoadedMonBoxLevel]
-	ld [wLoadedMonLevel],a
+;	ld a,[wLoadedMonBoxLevel]
+;	ld [wLoadedMonLevel],a
 .skipCopyingLevel
 	pop hl
 	ld bc,$001c

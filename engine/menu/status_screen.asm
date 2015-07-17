@@ -65,16 +65,7 @@ DrawHP_: ; 128fb (4:68fb)
 ; Predef 0x37
 StatusScreen: ; 12953 (4:6953)
 	call LoadMonData
-	ld a, [wcc49]
-	cp $2 ; 2 means we're in a PC box
-	jr c, .DontRecalculate ; 0x1295b $14
-	ld a, [wLoadedMonBoxLevel]
-	ld [wLoadedMonLevel], a
-	ld [W_CURENEMYLVL], a
-	ld hl, wLoadedMonHPExp - 1
-	ld de, wLoadedMonStats
-	ld b, $1
-	call CalcStats ; Recalculate stats
+
 .DontRecalculate
 	ld hl, wd72c
 	set 1, [hl]

@@ -3963,12 +3963,15 @@ Func_f51e: ; f51e (3:751e)
 .asm_f556
 	ld [hli], a          ; write new mon ID
 	ld [hl], $ff         ; write new sentinel
+	
 	ld a, [wcf95]
 	dec a
+	
 	ld hl, wPartyMons
 	ld bc, wPartyMon2 - wPartyMon1 ; $2c
 	ld a, [wPartyCount] ; wPartyCount
 	jr nz, .skipToNewMonEntry
+	
 	ld hl, wBoxMons
 	ld bc, wBoxMon2 - wBoxMon1 ; $21
 	ld a, [W_NUMINBOX] ; wda80
@@ -4083,19 +4086,23 @@ Func_f51e: ; f51e (3:751e)
 	add $2
 	ld [wcc49], a
 	call LoadMonData
-	callba CalcLevelFromExperience
-	ld a, d
-	ld [W_CURENEMYLVL], a ; W_CURENEMYLVL
+	
 	pop hl
-	ld bc, wBoxMon2 - wBoxMon1
-	add hl, bc
-	ld [hli], a
-	ld d, h
-	ld e, l
-	ld bc, $ffee
-	add hl, bc
-	ld b, $1
-	call CalcStats
+	ret
+	
+;	callba CalcLevelFromExperience
+;	ld a, d
+;	ld [W_CURENEMYLVL], a ; W_CURENEMYLVL
+;	pop hl
+;	ld bc, wBoxMon2 - wBoxMon1
+;	add hl, bc
+;	ld [hli], a
+;	ld d, h
+;	ld e, l
+;	ld bc, $ffee
+;	add hl, bc
+;	ld b, $1
+;	call CalcStats
 .asm_f664
 	and a
 	ret

@@ -256,6 +256,7 @@ BillsPCDeposit:
 	jp BillsPCMenu
 
 Func_21618: ; 21618 (8:5618)
+BillsPCWithdraw:
 	ld a, [W_NUMINBOX]
 	and a
 	jr nz, .asm_21627

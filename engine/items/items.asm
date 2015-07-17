@@ -2679,8 +2679,8 @@ SendNewMonToBox: ; e7a4 (3:67a4)
 	dec b
 	jr nz, .asm_e854
 .asm_e867
-	ld a, [wEnemyMonLevel] ; wEnemyMonLevel
-	ld [wEnemyMonBoxLevel], a
+;	ld a, [wEnemyMonLevel] ; wEnemyMonLevel
+;	ld [wEnemyMonBoxLevel], a
 	ld hl, wEnemyMon
 	ld de, wBoxMon1
 	ld bc, $c
@@ -2727,6 +2727,16 @@ SendNewMonToBox: ; e7a4 (3:67a4)
 	ld [de], a
 	dec b
 	jr nz, .asm_e8b1
+	
+; copy level and stats (ds NUM_STATS * 2) from enemy mon struct
+	ld hl, wEnemyMonLevel
+	ld b, NUM_STATS * 2 + 1
+.nextByte	
+	ld a, [hli]
+	inc de
+	ld [de], a
+	dec b
+	jr nz, .nextByte
 	ret
 
 ; checks if the tile in front of the player is a shore or water tile

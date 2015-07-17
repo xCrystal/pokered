@@ -82,15 +82,9 @@ LoadMonData_:
 ;  0: partymon
 ;  1: enemymon
 ;  2: boxmon
-;  3: daycaremon
+;  3: boxmon
 ; Return monster id at wcf91 and its data at wLoadedMon.
 ; Also load base stats at W_MONHDEXNUM for convenience.
-
-	ld a, [wDayCareMonSpecies]
-	ld [wcf91], a
-	ld a, [wcc49]
-	cp 3
-	jr z, .GetMonHeader
 
 	ld a, [wWhichPokemon]
 	ld e, a
@@ -110,13 +104,9 @@ LoadMonData_:
 	ld hl, wEnemyMons
 	jr z, .getMonEntry
 
-	cp 2
 	ld hl, wBoxMons
 	ld bc, wBoxMon2 - wBoxMon1
 	jr z, .getMonEntry
-
-	ld hl, wDayCareMon
-	jr .copyMonData
 
 .getMonEntry
 	ld a, [wWhichPokemon]
@@ -2749,22 +2739,6 @@ INCLUDE "data/dungeon_tilesets.asm"
 INCLUDE "data/tileset_headers.asm"
 
 IncrementDayCareMonExp: ; c8de (3:48de)
-	ld a, [W_DAYCARE_IN_USE]
-	and a
-	ret z
-	ld hl, wDayCareMonExp + 2
-	inc [hl]
-	ret nz
-	dec hl
-	inc [hl]
-	ret nz
-	dec hl
-	inc [hl]
-	ld a, [hl]
-	cp $50
-	ret c
-	ld a, $50
-	ld [hl], a
 	ret
 
 INCLUDE "data/hide_show_data.asm"
@@ -3960,7 +3934,7 @@ Func_f51e: ; f51e (3:751e)
 	cp $2
 	jr z, .checkPartyMonSlots
 	cp $3
-	ld hl, wDayCareMon
+	ld hl, wBoxMon1 ; wDayCareMon
 	jr z, .asm_f575
 	ld hl, W_NUMINBOX ; wda80
 	ld a, [hl]
@@ -3983,7 +3957,7 @@ Func_f51e: ; f51e (3:751e)
 	add hl, bc
 	ld a, [wcf95]
 	cp $2
-	ld a, [wDayCareMon]
+	ld a, [wBoxMon1] ; [wDayCareMon]
 	jr z, .asm_f556
 	ld a, [wcf91]
 .asm_f556
@@ -4011,7 +3985,7 @@ Func_f51e: ; f51e (3:751e)
 	ld bc, wBoxMon2 - wBoxMon1 ; $21
 	jr z, .asm_f591
 	cp $2
-	ld hl, wDayCareMon
+	ld hl, wBoxMon1 ; wDayCareMon
 	jr z, .asm_f597
 	ld hl, wPartyMons
 	ld bc, wPartyMon2 - wPartyMon1 ; $2c
@@ -4040,7 +4014,7 @@ Func_f51e: ; f51e (3:751e)
 .asm_f5b4
 	ld a, [wcf95]
 	cp $3
-	ld de, W_DAYCAREMONOT
+	ld de, wBoxMonOT ;; W_DAYCAREMONOT
 	jr z, .asm_f5d3
 	dec a
 	ld hl, wPartyMonOT ; wd273
@@ -4058,7 +4032,7 @@ Func_f51e: ; f51e (3:751e)
 	ld a, [wcf95]
 	and a
 	jr z, .asm_f5e6
-	ld hl, W_DAYCAREMONOT
+	ld hl, wBoxMonOT ;; W_DAYCAREMONOT
 	cp $2
 	jr z, .asm_f5ec
 	ld hl, wPartyMonOT ; wd273
@@ -4070,7 +4044,7 @@ Func_f51e: ; f51e (3:751e)
 	call CopyData
 	ld a, [wcf95]
 	cp $3
-	ld de, W_DAYCAREMONNAME
+	ld de, wBoxMonNicks ;; W_DAYCAREMONNAME
 	jr z, .asm_f611
 	dec a
 	ld hl, wPartyMonNicks ; wPartyMonNicks
@@ -4088,7 +4062,7 @@ Func_f51e: ; f51e (3:751e)
 	ld a, [wcf95]
 	and a
 	jr z, .asm_f624
-	ld hl, W_DAYCAREMONNAME
+	ld hl, wBoxMonNicks ;; W_DAYCAREMONNAME
 	cp $2
 	jr z, .asm_f62a
 	ld hl, wPartyMonNicks ; wPartyMonNicks

@@ -2269,17 +2269,6 @@ W_NUMSAFARIBALLS:: ; da47
 	ds 1
 
 
-W_DAYCARE_IN_USE:: ; da48
-; 0 if no pokemon is in the daycare
-; 1 if pokemon is in the daycare
-	ds 1
-
-W_DAYCAREMONNAME:: ds 11 ; da49
-W_DAYCAREMONOT::   ds 11 ; da54
-
-wDayCareMon:: box_struct wDayCareMon ; da5f
-
-
 W_NUMINBOX::  ds 1 ; da80
 wBoxSpecies:: ds MONS_PER_BOX + 1
 

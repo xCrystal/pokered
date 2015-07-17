@@ -421,6 +421,8 @@ ItemUseBall: ; d687 (3:5687)
 	ld a,1
 	ld [wAddPartyMonPPFromEnemyMonStruct],a
 	call AddPartyMon	;add mon to Party
+	xor a
+	ld [wAddPartyMonPPFromEnemyMonStruct],a
 	jr .End
 .sendToBox	;$5907
 	call ClearSprites
@@ -2377,7 +2379,7 @@ AddBonusPP: ; e642 (3:6642)
 ; 00: player's party
 ; 01: enemy's party
 ; 02: current box
-; 03: daycare
+; 03: wBoxMon1
 ; 04: player's in-battle pokemon
 ; [wCurrentMenuItem] = move index
 ; OUTPUT:
@@ -2395,7 +2397,7 @@ GetMaxPP: ; e677 (3:6677)
 	ld bc,wBoxMon2 - wBoxMon1
 	dec a
 	jr z,.sourceWithMultipleMon
-	ld hl,wDayCareMonMoves
+	ld hl,wBoxMon1Moves
 	dec a
 	jr z,.sourceWithOneMon
 	ld hl,wBattleMonMoves ; player's in-battle pokemon

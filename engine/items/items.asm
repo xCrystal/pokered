@@ -352,7 +352,8 @@ ItemUseBall: ; d687 (3:5687)
 	ld [wEnemyMonSpecies2],a
 	jr .next16
 .next15	;$5871
-	set Transformed,[hl]
+	ld hl, wCaughtThisMon
+	set 0,[hl]
 	ld hl,wcceb
 	ld a,[wEnemyMonDVs]
 	ld [hli],a
@@ -365,8 +366,7 @@ ItemUseBall: ; d687 (3:5687)
 	ld [wcf91],a
 	ld a,[wEnemyMonLevel]
 	ld [W_CURENEMYLVL],a
-	ld a,2
-	ld [wAddPartyMonPPFromEnemyMonStruct],a
+
 	callab LoadEnemyMonData
 	
 	pop af
@@ -2673,7 +2673,7 @@ SendNewMonToBox: ; e7a4 (3:67a4)
 	pop hl
 	ld d, h
 	ld e, l
-	ld bc, $ffdf
+	ld bc, wBoxMon1 - wBoxMon2
 	add hl, bc
 	pop bc
 	dec b

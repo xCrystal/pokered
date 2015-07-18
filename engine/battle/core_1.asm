@@ -889,7 +889,13 @@ LoadEnemyMonData: ; 3eb01 (f:6b01)
 ; INPUT:[wd0b5] = pokemon ID	
 	call GetMonHeader
 	
-; transform will no longer copy DVs
+; if caught this mon, get back saved DVs
+	ld a, [wCaughtThisMon]
+	bit 0, a ; caught this mon?
+	ld hl, wcceb ; copied DVs from original enemy mon
+	ld a, [hli]
+	ld b, [hl]
+	jr nz, .storeDVs	
 
 ; @@@ fixed DVs for trainer mon
 	ld a, [W_ISINBATTLE]

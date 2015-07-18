@@ -437,7 +437,8 @@ wSafariBaitFactor:: ; cce9
 wcceb:: ds 1 ; used to save the dvs of a mon when it uses transform
 wccec:: ds 1 ; also used with above case
 
-wUnused2:: ds 1 ; cced
+wCaughtThisMon:: ds 1 ; cced
+; bit 0: don't generate new DVs in LoadEnemyMonData (mon caught, old mon data was overwritten)
 
 wPlayerDisabledMoveNumber:: ds 1 ; ccee
 wEnemyDisabledMoveNumber:: ds 1 ; ccef
@@ -2274,7 +2275,15 @@ wBoxSpecies:: ds MONS_PER_BOX + 1
 
 wBoxMons::
 wBoxMon1:: box_struct wBoxMon1 ; da96
-wBoxMon2:: ds box_struct_length * (MONS_PER_BOX + -1) ; dab7
+wBoxMon2:: box_struct wBoxMon2
+wBoxMon3:: box_struct wBoxMon3
+wBoxMon4:: box_struct wBoxMon4
+wBoxMon5:: box_struct wBoxMon5
+wBoxMon6:: box_struct wBoxMon6
+wBoxMon7:: box_struct wBoxMon7
+wBoxMon8:: box_struct wBoxMon8
+wBoxMon9:: box_struct wBoxMon9
+wBoxMon10:: box_struct wBoxMon10
 
 wBoxMonOT::    ds 11 * MONS_PER_BOX ; dd2a
 wBoxMonNicks:: ds 11 * MONS_PER_BOX ; de06

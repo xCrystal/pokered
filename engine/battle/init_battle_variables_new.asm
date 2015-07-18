@@ -73,6 +73,7 @@ InitBattleVariables: ; 525af (14:65af)
 	ld [wListScrollOffset], a
 	ld [wEscapedFromBattle], a
 	ld [wMapPalOffset], a
+	ld [wCaughtThisMon], a
 	ld hl, wcf1d
 	ld [hli], a
 	ld [hl], a

@@ -292,8 +292,8 @@ SAVCheckSum: ; 73856 (1c:7856)
 
 Func_73863: ; 73863 (1c:7863)
 	ld hl, $a000
-	ld de, $ba4d
-	ld b, $6
+	ld de, $ba4d ; ; 1 + A000 + 6 * MONS_PER_BOX * (wBoxMon2 - wBoxMon1) + MONS_PER_BOX * ($b + $b) + MONS_PER_BOX + 2
+	ld b, $6 ; boxes per sram bank
 .asm_7386b
 	push bc
 	push de
@@ -311,10 +311,10 @@ Func_7387b: ; 7387b (1c:787b)
 	ld hl, PointerTable_73895 ; $7895
 	ld a, [wd5a0]
 	and $7f
-	cp $6
-	ld b, $2
+	cp $6 ; boxes per sram bank
+	ld b, $2 ; sram bank
 	jr c, .asm_7388c
-	inc b
+	inc b ; boxes 7-12 go in bank 3
 	sub $6
 .asm_7388c
 	ld e, a
@@ -392,7 +392,7 @@ Func_7390e: ; 7390e (1c:790e)
 	ld [MBC1SRamBankingMode], a
 	ld a, b
 	ld [MBC1SRamBank], a
-	ld bc, $462
+	ld bc, $462 ; MONS_PER_BOX * (wBoxMon2 - wBoxMon1) + MONS_PER_BOX * ($b + $b) + MONS_PER_BOX + 2
 	call CopyData
 	pop hl
 	xor a
@@ -400,9 +400,9 @@ Func_7390e: ; 7390e (1c:790e)
 	dec a
 	ld [hl], a
 	ld hl, $a000
-	ld bc, $1a4c
+	ld bc, $1a4c ; 6 * MONS_PER_BOX * (wBoxMon2 - wBoxMon1) + MONS_PER_BOX * ($b + $b) + MONS_PER_BOX + 2
 	call SAVCheckSum
-	ld [$ba4c], a
+	ld [$ba4c], a ; A000 + 6 * MONS_PER_BOX * (wBoxMon2 - wBoxMon1) + MONS_PER_BOX * ($b + $b) + MONS_PER_BOX + 2
 	call Func_73863
 	xor a
 	ld [MBC1SRamBankingMode], a
